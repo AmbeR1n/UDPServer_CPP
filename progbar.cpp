@@ -12,9 +12,8 @@ void loadingBar()
 
     printf("Loading... \n");
   
-    // Print initial loading bar
-    for (int i = 0; i < 26; i++)
-        cout << a << flush;
+    // Print initial loading bar(each "-" equals 5%)
+    cout << "--------------------" << flush;
   
     // Set the cursor again starting
     // point of loading bar
