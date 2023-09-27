@@ -8,8 +8,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <filesystem>
+#include "ProgressBar.h"
 
-char** append(char **s, int s_size, char **a, int a_size);
 template<typename T>
 int64_t current_time()
 {
@@ -18,17 +18,18 @@ int64_t current_time()
 
 int main(int argc, char *argv[]) 
 {
+    if (argc != 3)
     {
-        int default_argc = 3;
+        std::cout << "App requires 2 args:\tServer IP\tServer Port\nUsing default values:\t127.0.0.1\t5010\n";
+        const int default_argc = 3;
         char* default_argv[default_argc] = {argv[0], (char*)"127.0.0.1", (char*)"5010"};
-        argv = append(argv, argc, default_argv, default_argc);
+        argv = default_argv;
         argc = default_argc;
     }
-
     const char *SEPARATOR = "<SEP>";
-    const int BUFFER_SIZE = 1024*60;
+    const int BUFFER_SIZE = 1024*10;
     const in_addr_t ADDRESS = inet_addr(argv[1]);
-    const int S_PORT = strtoull(argv[2], NULL, 0);
+    const int S_PORT = strtol(argv[2], NULL, 0);
 
     int sockfd;
     char buffer[BUFFER_SIZE];
@@ -63,42 +64,22 @@ int main(int argc, char *argv[])
     std::string filename = fileinfo.substr(fileinfo.find(SEPARATOR)+5);
     std::cout << "file name: " << filename << " / " << "file size: " << filesize << std::endl;
 
-    int file_size = 0;
-    sscanf(filesize, "%d", &file_size);
+    uint64_t file_size = 0;
+    sscanf(filesize, "%llu", &file_size);
     std::ofstream file;
     std::filesystem::path p("download/"+filename);
     file.open (p, std::fstream::trunc);
-    int current_size = 0;
-    char *progress_bar[] = { (char *)"\u002D", (char *)"\u002D", (char *)"\u002D", (char *)"\u002D", (char *)"\u002D",
-                               (char *)"\u002D", (char *)"\u002D", (char *)"\u002D", (char *)"\u002D", (char *)"\u002D",
-                               (char *)"\u002D", (char *)"\u002D", (char *)"\u002D", (char *)"\u002D", (char *)"\u002D",
-                               (char *)"\u002D", (char *)"\u002D", (char *)"\u002D", (char *)"\u002D", (char *)"\u002D" };
-    auto start = current_time<std::chrono::seconds>();
-    auto p1 = current_time<std::chrono::nanoseconds>();
+    ProgressBar progressbar(file_size);
+    uint64_t current_size = 0;
     while (int size = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, NULL, NULL))
-        {
-        file << buffer;
-        double speed = size/(p1-current_time<std::chrono::nanoseconds>())*1000000000/1024;
-        p1 = current_time<std::chrono::nanoseconds>();
+    {
+        //file << buffer;
         current_size += size;
-        auto duration = current_time<std::chrono::seconds>()-start;
-        double progress = (double)current_size/file_size*100;
-        progress_bar[(int)progress / 5] = (char *)"\u25A0";
-        std::cout << duration / 60 << ":" << duration % 60 << progress << progress_bar << speed << "B/s" << "\n" << std::flush;
-        }
+        progressbar.Update(current_size);
+        progressbar.PrintLine();
+    }
     file.close();
 
     close(sockfd);
     return 0;
 }
-
-char** append(char **s, int s_size, char **a, int a_size)
-{
-    char **output = new char*[a_size+1];
-    for (int i = 0; i < s_size; i++)
-        output[i] = s[i];
-    for (int i = s_size; i < a_size; i++)
-        output[i] = a[i];
-    return output;
-}
-

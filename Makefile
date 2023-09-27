@@ -4,7 +4,7 @@ output:
 	mkdir -p output
 
 server:
-	g++ server.cpp -o output/server
+	g++ server.cpp ProgressBar.cpp -o output/server
 
 client:
 	g++ client.cpp ProgressBar.cpp -o output/client

@@ -7,8 +7,6 @@
 #include <string.h>
 #include "ProgressBar.h"
 
-char** append(char **s, int s_size, char **a, int a_size);
-std::string convert_str(char **s, int size);
 template<typename T>
 int64_t current_time()
 {
@@ -17,22 +15,25 @@ int64_t current_time()
 
 int main(int argc, char *argv[]) 
 {
+    if (argc != 3)
     {
-        const int default_argc = 4;
-        char* default_argv[default_argc] = {argv[0], (char*)"train.txt", (char*)"127.0.0.1", (char*)"5010"};
-        argv = append(argv, argc, default_argv, default_argc);
+        std::cout << "App requires 2 args:\tServer IP\tServer Port\nUsing default values:\t127.0.0.1\t5010\n";
+        const int default_argc = 3;
+        char* default_argv[default_argc] = {argv[0], (char*)"127.0.0.1", (char*)"5010"};
+        argv = default_argv;
         argc = default_argc;
     }
-    const int BUFFER_SIZE = 1024 * 60;
+
+    const int BUFFER_SIZE = 1024 * 10;
     const char *SEPARATOR = "<SEP>";
-    const char *FILE_NAME = argv[1];
-    const char *ADDRESS = argv[2];
-    const int S_PORT = strtoull(argv[3], NULL, 0);
+    const char *FILE_NAME = "train.txt";
+    const char *ADDRESS = argv[1];
+    const int S_PORT = strtol(argv[2], NULL, 0);
 
     int sockfd;
     char response[100];
     struct sockaddr_in server;
-    char *data = new char[BUFFER_SIZE];
+    
 
     // Creating socket file descriptor
     if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
@@ -48,56 +49,32 @@ int main(int argc, char *argv[])
 
     // Collecting file info
     std::filesystem::path filepath("upload/"+std::string(FILE_NAME));
-    int file_size = std::filesystem::file_size(filepath);
-    std::string fileinfo = std::to_string(file_size) + SEPARATOR + FILE_NAME;
+    uint64_t file_size = std::filesystem::file_size(filepath) * 4;
 
-    // Sending file info
-    int n = sendto(sockfd, fileinfo.c_str(), fileinfo.size(), 
+    // Sendind file info
+    std::string fileinfo = std::to_string(file_size) + SEPARATOR + FILE_NAME;
+    int n = sendto(sockfd, fileinfo.c_str(), fileinfo.size(),
         0, (const struct sockaddr *) &server, sizeof(server));
     std::cout << "file info sent to " << inet_ntoa(server.sin_addr) << ":" << htons(server.sin_port) << std::endl;
 
     // Sending file
     std::ifstream file;
     file.open(filepath, std::ios::in);
-    ProgressBar progressbar;
-    int current_size = 0;
-    char *progress_bar[] = {(char *)"-", (char *)"-", (char *)"-", (char *)"-", (char *)"-", (char *)"-", (char *)"-", (char *)"-", (char *)"-", (char *)"-", 
-                            (char *)"-", (char *)"-", (char *)"-", (char *)"-", (char *)"-", (char *)"-", (char *)"-", (char *)"-", (char *)"-", (char *)"-", };
-    auto start = current_time<std::chrono::seconds>();
-    auto p1 = current_time<std::chrono::nanoseconds>();
+    char *data = new char[BUFFER_SIZE];
+    file.read(data, BUFFER_SIZE);
+    ProgressBar progressbar = ProgressBar(file_size);
+    uint64_t current_size;
+    printf("About to start sending %llu bytes of data(%lluGB)...", file_size, file_size/1024/1024/1024);
+    getchar();
     while (current_size < file_size)
     {
-        file.read(data, BUFFER_SIZE-1);
         int size = sendto(sockfd, (const char *)data, BUFFER_SIZE, 0, (const struct sockaddr *) &server, sizeof(server));
-        double speed = size/(p1-current_time<std::chrono::nanoseconds>())*1000000000/1024;
-        p1 = current_time<std::chrono::nanoseconds>();
         current_size += size;
-        auto duration = current_time<std::chrono::seconds>()-start;
-        double progress = (double)current_size/file_size*100;
-        progress_bar[(int)progress / 5] = "+";
-        std::string str_progress = convert_str(progress_bar, 20);
-        std::cout/* << std::setw(2) << std::setfill('0') << duration / 60 << ":" << std::setw(2) << std::setfill('0') << duration % 60*/ << progress << str_progress/* << speed << "B/s" */<< "\r" << std::flush;
+        progressbar.Update(current_size);
+        progressbar.PrintLine();
     }
-    file.close();
-    
+    printf("\n");
+    file.close();    
     close(sockfd);
     return 0;
-}
-
-char** append(char **s, int s_size, char **a, int a_size)
-{
-    char **output = new char*[a_size+1];
-    for (int i = 0; i < s_size; i++)
-        output[i] = s[i];
-    for (int i = s_size; i < a_size; i++)
-        output[i] = a[i];
-    return output;
-}
-
-std::string convert_str(char **s, int size)
-{
-    std::string output;
-    for (int i = 0; i < size; i++)
-        output.append((const char *)s[i]);
-    return output;
 }

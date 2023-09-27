@@ -1,19 +1,20 @@
+#include <string>
 class ProgressBar
 {
 private:
+    int duration;
+    int count;
     int start;
     char reached;
     char unreached;
-    int size;
-    int bar_size;
-    int current_size;
+    uint64_t size;
     double speed;
     double progress;
-    char *progress_bar;
-    void CreateBar();
+    double sum_speed;
+    std::string progress_bar;
 public:
-    ProgressBar();
-    ProgressBar(char reached, char unreached, int size);
+    ProgressBar(uint64_t size);
     void PrintLine();
-    void Update(int sent_size, long nanoseconds);
+    void PrintFinal();
+    void Update(uint64_t sent_size);
 };

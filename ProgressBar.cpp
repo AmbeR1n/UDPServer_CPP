@@ -1,5 +1,21 @@
 #include "ProgressBar.h"
 #include <chrono>
+#include <iostream>
+#include <iomanip>
+enum class Units
+{
+    //from bytes to
+    Gigabit = 1024*1024*1024/8,
+    Megabit = 1024*1024/8,
+    Kilobit = 1024/8,
+    Gigabyte = 1024*1024*1024,
+    Megabyte = 1024*1024,
+    Kilobyte = 1024,
+    //to seconds from 
+    Millisecond = 1000,
+    Microsecond = 1000*1000,
+    Nanoseconds = 1000*1000*1000
+};
 
 template<typename T>
 long current_time()
@@ -7,49 +23,34 @@ long current_time()
     return std::chrono::duration_cast<T>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
-void ProgressBar::CreateBar()
+ProgressBar::ProgressBar(uint64_t size)
 {
-    for (int i = 0; i < this->bar_size; i++)
-    {
-        this->progress_bar[i] = this->unreached;
-    }
-}
-
-ProgressBar::ProgressBar()
-{
+    this->size = size;
     this->reached = '+';
     this->unreached = '-';
-    this->size = 0;
-    this->bar_size = 0;
-    this->current_size = 0;
+    this->duration = 0;
     this->speed = 0;
     this->progress = 0;
-    CreateBar();
-    this->start = current_time<std::chrono::seconds>();
-}
-
-ProgressBar::ProgressBar(char reached, char unreached, int size)
-{
-    this->reached = reached;
-    this->unreached = unreached;
-    this->size = size;
-    this->current_size = 0;
-    this->speed = 0;
-    this->progress = 0;
-    CreateBar();
-    this->start = current_time<std::chrono::seconds>();
+    this->progress_bar = std::string(20, unreached);
+    this->start = current_time<std::chrono::milliseconds>();
 }
 
 void ProgressBar::PrintLine()
 {
+    printf("%d %.1f%% %s %.2f Гбит/s\t\t\r", this->duration, this->progress, this->progress_bar.c_str(), this->speed);
+    fflush(NULL);
 }
 
-void ProgressBar::Update(int sent_size, long nanoseconds)
+void ProgressBar::PrintFinal()
 {
-    int duration = current_time<std::chrono::seconds>() - this->start;
-    this->current_size += sent_size;
-    this->progress = (double)this->current_size/this->size*100;
-    this->speed = sent_size/(current_time<std::chrono::nanoseconds>() - nanoseconds);
-    
+    printf("%d %.1f%% %s %.5f Гбит/s\n", this->duration, this->progress, this->progress_bar.c_str(), (double)this->size/this->duration*static_cast<int>(Units::Millisecond)/static_cast<int>(Units::Gigabit));
+}
+
+void ProgressBar::Update(uint64_t current_size)
+{
+    this->duration = current_time<std::chrono::milliseconds>() - this->start;
+    this->progress = (double)current_size/this->size*100;
+    this->speed = (double)current_size/(this->duration)*static_cast<int>(Units::Millisecond)/static_cast<int>(Units::Gigabit);
+    this->progress_bar[(int)progress / 5] = this->reached;
 }
 
