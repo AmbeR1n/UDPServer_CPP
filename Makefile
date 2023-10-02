@@ -4,10 +4,10 @@ output:
 	mkdir -p output
 
 server:
-	g++ -Wall -Wextra -pedantic server.cpp ProgressBar.cpp -o output/server
+	g++ -Wall -Wextra -pedantic server.cpp ProgressBar.cpp DatagramParser.cpp -o output/server
 
 client:
-	g++ -Wall -Wextra -pedantic client.cpp ProgressBar.cpp -o output/client
+	g++ -Wall -Wextra -pedantic client.cpp ProgressBar.cpp DatagramParser.cpp -o output/client
 
 s_run:
 	./output/server

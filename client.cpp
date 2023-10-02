@@ -7,6 +7,7 @@
 #include <string.h>
 #include <algorithm>
 #include "ProgressBar.h"
+#include "DatagramParser.h"
 
 void insert(char* s, char* a, int s_end, int a_size);
 template<typename T>
