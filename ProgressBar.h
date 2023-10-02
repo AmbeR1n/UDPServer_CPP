@@ -1,20 +1,68 @@
 #include <string>
+
+enum class Units
+{
+    //from bytes to
+    Gigabit = 1024*1024*1024/8,
+    Megabit = 1024*1024/8,
+    Kilobit = 1024/8,
+    Gigabyte = 1024*1024*1024,
+    Megabyte = 1024*1024,
+    Kilobyte = 1024,
+    //to seconds from 
+    Millisecond = 1000,
+    Microsecond = 1000*1000,
+    Nanoseconds = 1000*1000*1000
+};
+
+struct Speed
+{
+    double value;
+    double unit_factor;
+    std::string unit;
+    void operator=(Speed s)
+    {
+        this->value = s.value;
+        this->unit_factor = s.unit_factor;
+        this->unit = s.unit;
+    }
+    Speed(double v, double uf, std::string u)
+    {
+        this->value = v;
+        this->unit_factor = uf;
+        this->unit = u;
+    }
+    Speed()
+    {
+        this->value = 0;
+        this->unit_factor = 1;
+        this->unit = "бит/с";
+    }
+    double Calculate()
+    {
+        return value / unit_factor;
+    }
+};
+
 class ProgressBar
 {
 private:
-    int duration;
+    uint64_t duration;
     int count;
-    int start;
+    uint64_t start;
     char reached;
     char unreached;
-    uint64_t size;
-    double speed;
     double progress;
     double sum_speed;
+    uint64_t size;
+    Speed speed;
     std::string progress_bar;
+    double Conversion_Factor(double value);
+    std::string Conversion_Unit(double value);
 public:
-    ProgressBar(uint64_t size);
+    ProgressBar(uint64_t size_);
     void PrintLine();
     void PrintFinal();
-    void Update(uint64_t sent_size);
+    void Update(int sent_size, int* temp_size);
+    double Progress();
 };

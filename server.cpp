@@ -26,23 +26,22 @@ int main(int argc, char *argv[])
         argv = default_argv;
         argc = default_argc;
     }
-    const char *SEPARATOR = "<SEP>";
-    const int BUFFER_SIZE = 1024*10;
-    const in_addr_t ADDRESS = inet_addr(argv[1]);
-    const int S_PORT = strtol(argv[2], NULL, 0);
+    const char SEPARATOR[] = "<SEP>";
+    const int BUFFER_SIZE = 1024 * 12;
+    //const in_addr_t ADDRESS = inet_addr(argv[1]);
+    const int S_PORT = strtol(argv[2], NULL, 10);
 
     int sockfd;
-    char buffer[BUFFER_SIZE];
-    const char *response = "<OK>";
+    char recv_data[BUFFER_SIZE];
+
     struct sockaddr_in server;
     // Creating socket file descriptor
     if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
-    int server_len = sizeof(server);
-    memset(&server, 0, server_len);
-       
+    
+    memset(&server, 0, sizeof(server));
     // Filling server information
     server.sin_family = AF_INET; // IPv4
     server.sin_port = htons(S_PORT);
@@ -56,30 +55,59 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
     std::cout << "Server started on " << inet_ntoa(server.sin_addr) << ":" << htons(server.sin_port) << std::endl;
-
-    int n = recvfrom(sockfd, (char *)buffer, BUFFER_SIZE, 0, NULL, NULL);
-
-    std::string fileinfo = buffer; 
-    const char *filesize = fileinfo.substr(0, fileinfo.find(SEPARATOR)).c_str();
-    std::string filename = fileinfo.substr(fileinfo.find(SEPARATOR)+5);
-    std::cout << "file name: " << filename << " / " << "file size: " << filesize << std::endl;
-
-    uint64_t file_size = 0;
-    sscanf(filesize, "%llu", &file_size);
-    std::ofstream file;
-    std::filesystem::path p("download/"+filename);
-    file.open (p, std::fstream::trunc);
-    ProgressBar progressbar(file_size);
-    uint64_t current_size = 0;
-    while (int size = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, NULL, NULL))
+    while (true)
     {
-        //file << buffer;
-        current_size += size;
-        progressbar.Update(current_size);
-        progressbar.PrintLine();
-    }
-    file.close();
+        printf("Waiting for file data...\n");
+        int n = recvfrom(sockfd, (char *)recv_data, BUFFER_SIZE, 0, NULL, NULL);
+        if (n == -1)
+            return -1;
+        std::string fileinfo = recv_data; 
+        const char *filesize = fileinfo.substr(0, fileinfo.find(SEPARATOR)).c_str();
+        std::string filename = fileinfo.substr(fileinfo.find(SEPARATOR)+5);
+        std::cout << "file name: " << filename << " / " << "file size: " << filesize << std::endl;
 
+        uint64_t file_size = 0;
+        sscanf(filesize, "%lu", &file_size);
+        std::ofstream file;
+
+        std::filesystem::path p("download/"+filename);
+        file.open (p, std::fstream::trunc);
+        ProgressBar progressbar(file_size);
+        uint64_t current_size = 0;
+        auto t1 = current_time<std::chrono::nanoseconds>();
+        int temp_size = 0;
+        long prev_dgram = 0;
+        while (int size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, NULL, NULL))
+        {
+            // file << recv_data;
+            current_size += size;   
+            temp_size += size;
+            auto t2 = current_time<std::chrono::nanoseconds>();
+            if (t2-t1 > 1000000000)
+            {
+               progressbar.Update(size, &temp_size);
+               t1 = t2;
+               temp_size = 0;
+            }
+            else 
+            {
+                progressbar.Update(size, NULL);
+            }
+            char tail[30];
+            strncpy(tail, recv_data+BUFFER_SIZE-30, 30);
+            std::string tail_str = std::string(tail);
+            long dgram_counter = strtol(tail_str.substr(5, 25).c_str(), NULL, 10);
+            if (dgram_counter - prev_dgram > 1)
+            {
+                //printf("                                                          \r%s\t%ld\t%ld\t%ld\n", tail_str.c_str(), dgram_counter, prev_dgram, dgram_counter-prev_dgram);
+            }
+            prev_dgram = dgram_counter;
+            progressbar.PrintLine();
+        }
+        printf("\n%lu\t%lu\t%.1f\n", file_size, current_size, static_cast<double>(file_size - current_size)/file_size*100);
+        //progressbar.PrintFinal();
+        file.close();
+    }
     close(sockfd);
     return 0;
 }
