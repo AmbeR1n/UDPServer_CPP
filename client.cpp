@@ -84,7 +84,6 @@ int main(int argc, char *argv[])
         current_size += size;
         temp_size += size;
         
-        
         if (t2-t1 > 1000000000)
         {
             progressbar.Update(size, &temp_size);

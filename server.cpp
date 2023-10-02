@@ -111,3 +111,19 @@ int main(int argc, char *argv[])
     close(sockfd);
     return 0;
 }
+
+
+struct Header
+{
+    const char* head = "<HEADER>";
+    char* data;
+    const char* tail = "</HEADER>";
+    
+};
+
+struct Tail
+{
+    const char* head = "<TAIL>";
+    char* data;
+    const char* tail = "</TAIL>";
+};
