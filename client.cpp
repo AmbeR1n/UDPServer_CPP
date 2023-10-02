@@ -5,13 +5,13 @@
 #include <filesystem>
 #include <unistd.h>
 #include <string.h>
+#include <vector>
 #include <algorithm>
 #include "ProgressBar.h"
 #include "DatagramParser.h"
 
-void insert(char* s, char* a, int s_end, int a_size);
 template<typename T>
-int64_t current_time()
+long current_time()
 {
     return std::chrono::duration_cast<T>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 
     // Collecting file info
     std::filesystem::path filepath("upload/"+std::string(FILE_NAME));
-    uint64_t file_size = std::filesystem::file_size(filepath) * 5;
+    long file_size = std::filesystem::file_size(filepath) * 5;
 
     // Sendind file info
     std::string fileinfo = std::to_string(file_size) + SEPARATOR + FILE_NAME;
@@ -66,21 +66,21 @@ int main(int argc, char *argv[])
     std::ifstream file;
     file.open(filepath, std::ios::in);
     char data[BUFFER_SIZE];
-    file.read(data, BUFFER_SIZE-30);
+    file.read(data, BUFFER_SIZE-128);
     ProgressBar progressbar = ProgressBar(file_size);
-    uint64_t current_size;
+    DatagramParser parser = DatagramParser(std::string(data));
+    long current_size;
     int temp_size = 0;
-    printf("About to start sending %lu bytes of data(%luGB)...", file_size, file_size/1024/1024/1024);
+    printf("About to start sending %lu bytes of data(%.1fGB)...", file_size, (double)file_size/1024/1024/1024);
     getchar();
     auto t1 = current_time<std::chrono::nanoseconds>();
     long counter = 1;
     while (current_size < file_size)
     {
-        auto tail = SEPARATOR + std::string(30-5 - std::min(30-5, static_cast<int>(std::to_string(counter).length())), '0') + std::to_string(counter);
-        //printf("                                                            \r%s\n", tail.c_str());
+        parser = DatagramParser(std::string(data));
+        parser.BuildHeader(std::vector<std::string>{std::to_string(counter), std::string(FILE_NAME), std::to_string(file_size)});
         counter++;
-        std::copy(tail.begin(), tail.end(), data+BUFFER_SIZE-30);
-        int size = sendto(sockfd, (const char *)data, BUFFER_SIZE, 0, (const struct sockaddr *) &server, sizeof(server));
+        int size = sendto(sockfd, parser.BuildDatagram().c_str(), BUFFER_SIZE, 0, (const struct sockaddr *) &server, sizeof(server));
         auto t2 = current_time<std::chrono::nanoseconds>();
         current_size += size;
         temp_size += size;
@@ -102,10 +102,4 @@ int main(int argc, char *argv[])
     file.close();    
     close(sockfd);
     return 0;
-}
-
-void insert(char* s, char* a, int s_end, int a_size)
-{
-    for (int i = 0; i<a_size; i++)
-        s[s_end+i] = a[i];
 }

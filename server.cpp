@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
     const char SEPARATOR[] = "<SEP>";
     const int BUFFER_SIZE = 1024 * 12;
     //const in_addr_t ADDRESS = inet_addr(argv[1]);
-    const int S_PORT = strtol(argv[2], NULL, 10);
+    const int S_PORT = std::stoi(argv[2]);
 
     int sockfd;
     char recv_data[BUFFER_SIZE];
@@ -59,28 +59,25 @@ int main(int argc, char *argv[])
     while (true)
     {
         printf("Waiting for file data...\n");
-        int n = recvfrom(sockfd, (char *)recv_data, BUFFER_SIZE, 0, NULL, NULL);
-        if (n == -1)
-            return -1;
-        std::string fileinfo = recv_data; 
-        const char *filesize = fileinfo.substr(0, fileinfo.find(SEPARATOR)).c_str();
-        std::string filename = fileinfo.substr(fileinfo.find(SEPARATOR)+5);
-        std::cout << "file name: " << filename << " / " << "file size: " << filesize << std::endl;
-
-        uint64_t file_size = 0;
-        sscanf(filesize, "%lu", &file_size);
-        std::ofstream file;
+        int size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, NULL, NULL);
+        DatagramParser parser = DatagramParser(recv_data);
+        parser.ExtractHeader();
+        auto header_data = parser.GetHeader();
+         
+        unsigned long file_size = std::stoi(header_data[2]);
+        std::string filename = header_data[1];
+        std::cout << "file name: " << filename << " / " << "file size: " << file_size << std::endl;
 
         std::filesystem::path p("download/"+filename);
-        file.open (p, std::fstream::trunc);
         ProgressBar progressbar(file_size);
-        uint64_t current_size = 0;
+        long current_size = 0;
         auto t1 = current_time<std::chrono::nanoseconds>();
         int temp_size = 0;
-        long prev_dgram = 0;
+        long prev_dgram = std::stoi(header_data[0]);
         while (int size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, NULL, NULL))
         {
-            // file << recv_data;
+            DatagramParser parser = DatagramParser(recv_data);
+            parser.ExtractHeader();
             current_size += size;   
             temp_size += size;
             auto t2 = current_time<std::chrono::nanoseconds>();
@@ -94,10 +91,8 @@ int main(int argc, char *argv[])
             {
                 progressbar.Update(size, NULL);
             }
-            char tail[30];
-            strncpy(tail, recv_data+BUFFER_SIZE-30, 30);
-            std::string tail_str = std::string(tail);
-            long dgram_counter = strtol(tail_str.substr(5, 25).c_str(), NULL, 10);
+            auto header_data = parser.GetHeader();
+            long dgram_counter = std::stoi(header_data[0]);
             if (dgram_counter - prev_dgram > 1)
             {
                 //printf("                                                          \r%s\t%ld\t%ld\t%ld\n", tail_str.c_str(), dgram_counter, prev_dgram, dgram_counter-prev_dgram);
@@ -105,9 +100,9 @@ int main(int argc, char *argv[])
             prev_dgram = dgram_counter;
             progressbar.PrintLine();
         }
-        printf("\n%lu\t%lu\t%.1f\n", file_size, current_size, static_cast<double>(file_size - current_size)/file_size*100);
+        //printf("\n%lu\t%lu\t%.1f\n", file_size, current_size, static_cast<double>(file_size - current_size)/file_size*100);
         //progressbar.PrintFinal();
-        file.close();
+        //file.close();
     }
     close(sockfd);
     return 0;

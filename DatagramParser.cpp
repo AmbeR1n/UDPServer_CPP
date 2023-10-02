@@ -2,38 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 
-DatagramParser::DatagramParser(int size, std::string data, std::vector<std::string> header, std::vector<std::string> tail)
+DatagramParser::DatagramParser(std::string data)
 {
-    data_size = size;
     this->data = data;
-    this->header = header;
-    this->tail = tail;
-    header_b = "<H>";
-    header_e = "</H>";
-    tail_b = "<T>";
-    tail_e = "</T>";
-    sep = "<S>";
-}
-
-DatagramParser::DatagramParser(int size, std::string data)
-{
-    data_size = size;
-    this->data = data;
-    this->header = std::vector<std::string>();
-    this->tail = std::vector<std::string>();
-    header_b = "<H>";
-    header_e = "</H>";
-    tail_b = "<T>";
-    tail_e = "</T>";
-    sep = "<S>";
-}
-
-DatagramParser::DatagramParser(int size, std::string data, std::vector<std::string> header)
-{
-    data_size = size;
-    this->data = data;
-    this->header = header;
-    this->tail = std::vector<std::string>();
+    this->header = std::string();
+    this->tail = std::string();
     header_b = "<H>";
     header_e = "</H>";
     tail_b = "<T>";
@@ -43,28 +16,34 @@ DatagramParser::DatagramParser(int size, std::string data, std::vector<std::stri
 
 std::vector<std::string> DatagramParser::GetHeader()
 {
-    auto start = data.find(header_b) + header_b.length();
-    auto end = data.find(header_e);
-    return Separate(data.substr(start, end-start));
+    if(header.empty())
+        {
+            if (!ExtractHeader())
+                return std::vector<std::string>();
+        }
+    auto begin = header.find(header_b) + header_b.length();
+    auto end = header.find(header_e);
+    return Separate(header.substr(begin, end-begin));
 }
-
-
 
 std::vector<std::string> DatagramParser::GetTail()
 {
-    auto start = data.find(tail_b) + tail_b.length();
-    auto end = data.find(tail_e);
-    return Separate(data.substr(start, end-start));
+    if(tail.empty())
+        {
+            if (!ExtractTail())
+                return std::vector<std::string>();
+        }
+    auto begin = tail.find(tail_b) + tail_b.length();
+    auto end = tail.find(tail_e);
+    return Separate(tail.substr(begin, end-begin));
 }
 
-std::vector<std::string> DatagramParser::GetData()
+std::string DatagramParser::GetData()
 {
-    auto start = data.find(header_e) + header_e.length();
-    auto end = data.find(tail_b);
-    return Separate(data.substr(start, end-start));
+    return data;
 }
 
-std::vector<std::string> DatagramParser::Separate(std::string data)
+std::vector<std::string> DatagramParser::Separate(std::string metadata)
 {
     std::vector<std::string> output;
     char* pch = strtok(const_cast<char*>(data.c_str()), sep.c_str());
@@ -76,28 +55,52 @@ std::vector<std::string> DatagramParser::Separate(std::string data)
     return output;
 }
 
-std::string DatagramParser::BuildDatagram(std::vector<std::string> h, std::vector<std::string> t, std::string d)
+std::string DatagramParser::BuildDatagram()
 {
-    return header_b + BuildHeader(h) + header_e + d + tail_b + BuildTail(t) + tail_e;
+    return header + data + tail;
 }
 
-std::string DatagramParser::BuildHeader(std::vector<std::string> h)
+void DatagramParser::BuildHeader(std::vector<std::string> header_params)
 {
-    std::string head;
-    for (auto h_data : h)
-        head.append(h_data);
-    return head;
+    if (header_params.empty())
+        return;
+    std::string str_header = header_b;
+    for (auto h_data : header_params)
+        str_header.append(h_data + sep);
+    header = str_header.substr(0, str_header.length()-sep.length()) + header_e;
 }
 
-std::string DatagramParser::BuildTail(std::vector<std::string> t)
+void DatagramParser::BuildTail(std::vector<std::string> tail_params)
 {
-    std::string tail;
-    for (auto t_data : t)
-        tail.append(t_data);
-    return tail;
+    if (tail_params.empty())
+        return;
+    std::string str_tail = tail_b;
+    for (auto t_data : tail_params)
+        str_tail.append(t_data + sep);
+    tail = str_tail.substr(0, str_tail.length()-sep.length()) + tail_e;
+}
+
+bool DatagramParser::ExtractHeader()
+{
+    if (data.find(header_b) != std::string::npos)
+    {
+        header = data.substr(data.find(header_b), data.find(header_e)-data.find(header_b));
+        return true;
+    }
+    return false; 
+}
+
+bool DatagramParser::ExtractTail()
+{
+    if (data.find(tail_b) != std::string::npos)
+    {
+        tail = data.substr(data.find(tail_b), data.find(tail_e)-data.find(tail_b));
+        return true;
+    }
+    return false;
 }
 
 int DatagramParser::DatagramSize()
 {
-    return 0;
+    return header.length()+data.length()+tail.length();
 }

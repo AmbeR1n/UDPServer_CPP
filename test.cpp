@@ -12,6 +12,6 @@ int main()
     strcpy(text1, "gjkialoshfdgbviujfdahbvdiujla");
     strcpy(text1, "");
     strcpy(text1, "<END>");
-    std::cout << text1 << END << "\t" << (strcmp(text1, END)) << "\n";
+    std::cout << sizeof(int64_t) << "\n";
     return 0;
 }
