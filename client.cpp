@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     }
 
     const int BUFFER_SIZE = 1024 * 12; // 12kB
-    const char SEPARATOR[] = "<SEP>";
+    //const char SEPARATOR[] = "<SEP>";
     const char *FILE_NAME = "train.txt";
     const char *ADDRESS = argv[1];
     const int S_PORT = strtol(argv[2], NULL, 10);
@@ -54,14 +54,6 @@ int main(int argc, char *argv[])
     std::filesystem::path filepath("upload/"+std::string(FILE_NAME));
     long file_size = std::filesystem::file_size(filepath) * 5;
 
-    // Sendind file info
-    std::string fileinfo = std::to_string(file_size) + SEPARATOR + FILE_NAME;
-    int n = sendto(sockfd, fileinfo.c_str(), fileinfo.size(),
-        0, (const struct sockaddr *) &server, sizeof(server));
-    if (n == -1)
-        return -1;
-    std::cout << "file info sent to " << inet_ntoa(server.sin_addr) << ":" << htons(server.sin_port) << std::endl;
-
     // Sending file
     std::ifstream file;
     file.open(filepath, std::ios::in);
@@ -69,7 +61,7 @@ int main(int argc, char *argv[])
     file.read(data, BUFFER_SIZE-128);
     ProgressBar progressbar = ProgressBar(file_size);
     DatagramParser parser = DatagramParser(std::string(data));
-    long current_size;
+    long current_size = 0;
     int temp_size = 0;
     printf("About to start sending %lu bytes of data(%.1fGB)...", file_size, (double)file_size/1024/1024/1024);
     getchar();

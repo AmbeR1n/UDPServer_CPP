@@ -15,7 +15,7 @@ class DatagramParser
         std::vector<std::string> Separate(std::string metadata);
 
     public:
-        DatagramParser(std::string data);
+        DatagramParser(std::string sending_data);
 
         std::vector<std::string> GetHeader();
         std::vector<std::string> GetTail();
@@ -29,4 +29,5 @@ class DatagramParser
         bool ExtractTail();
 
         int DatagramSize();
+        int DataSize();
 };

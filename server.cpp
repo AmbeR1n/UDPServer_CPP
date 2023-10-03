@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
         argv = default_argv;
         argc = default_argc;
     }
-    const char SEPARATOR[] = "<SEP>";
+    //const char SEPARATOR[] = "<SEP>";
     const int BUFFER_SIZE = 1024 * 12;
     //const in_addr_t ADDRESS = inet_addr(argv[1]);
     const int S_PORT = std::stoi(argv[2]);
@@ -61,25 +61,23 @@ int main(int argc, char *argv[])
         printf("Waiting for file data...\n");
         int size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, NULL, NULL);
         DatagramParser parser = DatagramParser(recv_data);
-        parser.ExtractHeader();
-        auto header_data = parser.GetHeader();
-         
-        unsigned long file_size = std::stoi(header_data[2]);
+        std::vector<std::string> header_data = parser.GetHeader();
+        long file_size = std::stol(header_data[2].c_str());
         std::string filename = header_data[1];
         std::cout << "file name: " << filename << " / " << "file size: " << file_size << std::endl;
-
         std::filesystem::path p("download/"+filename);
         ProgressBar progressbar(file_size);
-        long current_size = 0;
+        long current_size = parser.DataSize();
         auto t1 = current_time<std::chrono::nanoseconds>();
         int temp_size = 0;
         long prev_dgram = std::stoi(header_data[0]);
-        while (int size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, NULL, NULL))
+        while ((size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, NULL, NULL)) < 1)
         {
-            DatagramParser parser = DatagramParser(recv_data);
+            parser = DatagramParser(recv_data);
             parser.ExtractHeader();
-            current_size += size;   
-            temp_size += size;
+            parser.ExtractTail();
+            current_size += parser.DataSize();   
+            temp_size += parser.DataSize();
             auto t2 = current_time<std::chrono::nanoseconds>();
             if (t2-t1 > 1000000000)
             {
@@ -91,8 +89,8 @@ int main(int argc, char *argv[])
             {
                 progressbar.Update(size, NULL);
             }
-            auto header_data = parser.GetHeader();
-            long dgram_counter = std::stoi(header_data[0]);
+            header_data = parser.GetHeader();
+            long dgram_counter = std::stol(header_data[0]);
             if (dgram_counter - prev_dgram > 1)
             {
                 //printf("                                                          \r%s\t%ld\t%ld\t%ld\n", tail_str.c_str(), dgram_counter, prev_dgram, dgram_counter-prev_dgram);
@@ -100,6 +98,9 @@ int main(int argc, char *argv[])
             prev_dgram = dgram_counter;
             progressbar.PrintLine();
         }
+        if (size == -1)
+            std::cout << "size = -1";
+        std::cin >> size;
         //printf("\n%lu\t%lu\t%.1f\n", file_size, current_size, static_cast<double>(file_size - current_size)/file_size*100);
         //progressbar.PrintFinal();
         //file.close();
