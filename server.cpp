@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
         long current_size = parser.DataSize();
         auto t1 = current_time<std::chrono::nanoseconds>();
         int temp_size = 0;
-        long prev_dgram = std::stoi(header_data[0]);
+        long prev_dgram = std::stol(header_data[0]);
         while ((size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, NULL, NULL)) < 1)
         {
             parser = DatagramParser(recv_data);
