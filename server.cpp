@@ -1,96 +1,110 @@
-#include <bits/stdc++.h>
 #include <arpa/inet.h>
-//#include <stdlib.h>
-//#include <unistd.h>
-//#include <string.h>
-//#include <sys/types.h>
-//#include <sys/socket.h>
-//#include <netinet/in.h>
-//#include <filesystem>
+#include <iostream>
+#include <fstream>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <filesystem>
+#include "ProgressBar.h"
+#include "DatagramParser.h"
 
-char** append(char **s, int s_size, char **a, int a_size);
+template<typename T>
+int64_t current_time()
+{
+    return std::chrono::duration_cast<T>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
 
 int main(int argc, char *argv[]) 
 {
+    if (argc != 3)
     {
-        int default_argc = 4;
-        char* default_argv[default_argc] = {argv[0], (char*)"0.0.0.0", (char*)"5009", (char*)"5007"};
-        argv = append(argv, argc, default_argv, default_argc);
+        std::cout << "App requires 2 args:\tServer IP\tServer Port\nUsing default values:\t127.0.0.1\t5010\n";
+        const int default_argc = 3;
+        char* default_argv[default_argc] = {argv[0], (char*)"127.0.0.1", (char*)"5010"};
+        argv = default_argv;
         argc = default_argc;
     }
-
-    const char *SEPARATOR = "<SEP>";
-    const int BUFFER_SIZE = 1024*16;
-    const in_addr_t ADDRESS = inet_addr(argv[1]);
-    const int S_PORT = strtoull(argv[2], NULL, 0);
-    const int C_PORT = strtoull(argv[3], NULL, 0);
+    //const char SEPARATOR[] = "<SEP>";
+    const int BUFFER_SIZE = 1024 * 12;
+    //const in_addr_t ADDRESS = inet_addr(argv[1]);
+    const int S_PORT = std::stoi(argv[2]);
 
     int sockfd;
-    char buffer[BUFFER_SIZE];
-    const char *response = "<OK>";
-    struct sockaddr_in serversocket, clientsocket;
+    char recv_data[BUFFER_SIZE];
+
+    struct sockaddr_in server;
     // Creating socket file descriptor
     if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
-       
-    memset(&serversocket, 0, sizeof(serversocket));
-    memset(&clientsocket, 0, sizeof(clientsocket));
-       
+    
+    memset(&server, 0, sizeof(server));
     // Filling server information
-    serversocket.sin_family = AF_INET; // IPv4
-    serversocket.sin_port = htons(S_PORT);
-    serversocket.sin_addr.s_addr = INADDR_ANY;
+    server.sin_family = AF_INET; // IPv4
+    server.sin_port = htons(S_PORT);
+    server.sin_addr.s_addr = INADDR_ANY;
     
     // Bind the socket with the server address
-    if ( bind(sockfd, (const struct sockaddr *)&serversocket, 
-            sizeof(serversocket)) < 0 )
+    if ( bind(sockfd, (const struct sockaddr *)&server, 
+            sizeof(server)) < 0 )
     {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
-    std::cout << "Server started on " << inet_ntoa(serversocket.sin_addr) << ":" << htons(serversocket.sin_port) << std::endl;
-    socklen_t len;
-    int n;
-   
-
-    n = recvfrom(sockfd, (char *)buffer, BUFFER_SIZE, 0, ( struct sockaddr *) &clientsocket, &len);
-    buffer[n] = '\0';
-    clientsocket.sin_port = htons(C_PORT);
-    printf("received: %i bytes from client %s:%i\n", n,
-		       inet_ntoa(clientsocket.sin_addr), htons(clientsocket.sin_port));
-    //n = sendto(sockfd, response, 4, 0, (const struct sockaddr *) &clientsocket, sizeof(clientsocket));
-    //printf("response sent with %i bytes\n", n);
-
-    std::string fileinfo = buffer; 
-    const char *filesize = fileinfo.substr(0, fileinfo.find(SEPARATOR)).c_str();
-    std::string filename = fileinfo.substr(fileinfo.find(SEPARATOR)+5);
-    std::cout << "file name: " << filename << " / " << "file size: " << filesize << std::endl;
-
-    int file_size = 0;
-    sscanf(filesize, "%d", file_size);
-    std::ofstream file;
-    std::filesystem::path p("download/"+filename);
-    file.open (p, std::fstream::trunc);
-    int current_size = 0;
-    while (n = recvfrom(sockfd, buffer, BUFFER_SIZE, 
-                0, ( struct sockaddr *) &clientsocket, &len))
+    std::cout << "Server started on " << inet_ntoa(server.sin_addr) << ":" << htons(server.sin_port) << std::endl;
+    while (true)
+    {
+        printf("Waiting for file data...\n");
+        int size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, NULL, NULL);
+        DatagramParser parser = DatagramParser(recv_data);
+        std::vector<std::string> header_data = parser.GetHeader();
+        long file_size = std::stol(header_data[2].c_str());
+        std::string filename = header_data[1];
+        std::cout << "file name: " << filename << " / " << "file size: " << file_size << std::endl;
+        std::filesystem::path p("download/"+filename);
+        ProgressBar progressbar(file_size);
+        long current_size = parser.DataSize();
+        auto t1 = current_time<std::chrono::nanoseconds>();
+        int temp_size = 0;
+        long prev_dgram = std::stol(header_data[0]);
+        while ((size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, NULL, NULL)) < 1)
         {
-        file << buffer;
-        current_size += n;
-        std::cout<<"received "<<(double)current_size/file_size*100 << "%\r" <<std::flush;
+            parser = DatagramParser(recv_data);
+            parser.ExtractHeader();
+            parser.ExtractTail();
+            current_size += parser.DataSize();   
+            temp_size += parser.DataSize();
+            auto t2 = current_time<std::chrono::nanoseconds>();
+            if (t2-t1 > 1000000000)
+            {
+               progressbar.Update(size, &temp_size);
+               t1 = t2;
+               temp_size = 0;
+            }
+            else 
+            {
+                progressbar.Update(size, NULL);
+            }
+            header_data = parser.GetHeader();
+            long dgram_counter = std::stol(header_data[0]);
+            if (dgram_counter - prev_dgram > 1)
+            {
+                //printf("                                                          \r%s\t%ld\t%ld\t%ld\n", tail_str.c_str(), dgram_counter, prev_dgram, dgram_counter-prev_dgram);
+            }
+            prev_dgram = dgram_counter;
+            progressbar.PrintLine();
         }
-    file.close();
+        if (size == -1)
+            std::cout << "size = -1";
+        std::cin >> size;
+        //printf("\n%lu\t%lu\t%.1f\n", file_size, current_size, static_cast<double>(file_size - current_size)/file_size*100);
+        //progressbar.PrintFinal();
+        //file.close();
+    }
+    close(sockfd);
     return 0;
-}
-
-char** append(char **s, int s_size, char **a, int a_size)
-{
-    char **output = new char*[a_size+1];
-    for (int i = 0; i < s_size; i++)
-        output[i] = s[i];
-    for (int i = s_size; i < a_size; i++)
-        output[i] = a[i];
-    return output;
 }

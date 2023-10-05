@@ -1,89 +1,97 @@
-#include <bits/stdc++.h>
 #include <arpa/inet.h>
-//#include <iostream>
-//#include <sys/types.h>
-//#include <sys/stat.h>
-//#include <sys/socket.h>
-//#include <netinet/in.h>
-//#include <fstream>
-//#include <filesystem>
-//#include <stdlib.h>
-//#include <unistd.h>
+#include <iostream>
+#include <netinet/in.h>
+#include <fstream>
+#include <filesystem>
+#include <unistd.h>
+#include <string.h>
+#include <vector>
+#include <algorithm>
+#include "ProgressBar.h"
+#include "DatagramParser.h"
 
-char** append(char **s, int s_size, char **a, int a_size);
+template<typename T>
+long current_time()
+{
+    return std::chrono::duration_cast<T>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
 
 int main(int argc, char *argv[]) 
 {
+    if (argc != 3)
     {
-        int default_argc = 5;
-        char* default_argv[default_argc] = {argv[0], (char*)"train.txt", (char*)"0.0.0.0", (char*)"5009", (char*)"5007"};
-        argv = append(argv, argc, default_argv, default_argc);
+        std::cout << "App requires 2 args:\tServer IP\tServer Port\nUsing default values:\t127.0.0.1\t5010\n";
+        const int default_argc = 3;
+        char* default_argv[default_argc] = {argv[0], (char*)"127.0.0.1", (char*)"5010"};
+        argv = default_argv;
         argc = default_argc;
     }
-    const int BUFFER_SIZE = 1024 * 16;
-    const char *SEPARATOR = "<SEP>";
-    const char *FILE_NAME = argv[1];
-    const in_addr_t ADDRESS = inet_addr(argv[2]);
-    const int S_PORT = strtoull(argv[3], NULL, 0);
-    const int C_PORT = strtoull(argv[4], NULL, 0);
+
+    const int BUFFER_SIZE = 1024 * 12; // 12kB
+    //const char SEPARATOR[] = "<SEP>";
+    const char *FILE_NAME = "train.txt";
+    const char *ADDRESS = argv[1];
+    const int S_PORT = strtol(argv[2], NULL, 10);
 
     int sockfd;
-    char response[100];
-    struct sockaddr_in serversocket;
-    char *data = new char[BUFFER_SIZE];
+    //char response[100];
+    struct sockaddr_in server;
+    
 
     // Creating socket file descriptor
     if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
-   
-    memset(&serversocket, 0, sizeof(serversocket));
+    
     // Filling server information
-    serversocket.sin_family = AF_INET;
-    serversocket.sin_port = htons(S_PORT);
-    inet_pton(AF_INET, "localhost", &serversocket.sin_addr);
-       
-    // Collecting file info
-    std::filesystem::path filepath {FILE_NAME};
-    int filesize = std::filesystem::file_size(filepath);
-    std::string fileinfo = std::to_string(filesize) + SEPARATOR + FILE_NAME;
+    memset(&server, 0, sizeof(server));
+    server.sin_family = AF_INET;
+    server.sin_port = htons(S_PORT);
+    inet_pton(AF_INET, ADDRESS, &server.sin_addr);
 
-    // Sending file info and waiting for response
-    int n = sendto(sockfd, fileinfo.c_str(), fileinfo.size(), 
-        0, (const struct sockaddr *) &serversocket, sizeof(serversocket));
-    std::cout << "file info sent to " << inet_ntoa(serversocket.sin_addr) << ":" << htons(serversocket.sin_port) << std::endl;
-    //socklen_t len;
-    //int n = recvfrom(sockfd, (char *)response, 4, 0, NULL, NULL);
-    //response[n] = '\0';
-    printf("sent: %i bytes from client to %s:%i\n", n,
-		       inet_ntoa(serversocket.sin_addr), htons(serversocket.sin_port));
+    // Collecting file info
+    std::filesystem::path filepath("upload/"+std::string(FILE_NAME));
+    long file_size = std::filesystem::file_size(filepath) * 5;
 
     // Sending file
     std::ifstream file;
     file.open(filepath, std::ios::in);
-    int current_size = 0;
-    while (current_size < filesize)
+    char data[BUFFER_SIZE];
+    file.read(data, BUFFER_SIZE-128);
+    ProgressBar progressbar = ProgressBar(file_size);
+    DatagramParser parser = DatagramParser(std::string(data));
+    long current_size = 0;
+    int temp_size = 0;
+    printf("About to start sending %lu bytes of data(%.1fGB)...", file_size, (double)file_size/1024/1024/1024);
+    getchar();
+    auto t1 = current_time<std::chrono::nanoseconds>();
+    long counter = 1;
+    while (current_size < file_size)
     {
-        file.read(data, BUFFER_SIZE-1);
-        int size = sendto(sockfd, (const char *)data, BUFFER_SIZE,
-            MSG_CONFIRM, (const struct sockaddr *) &serversocket, sizeof(serversocket));
+        parser = DatagramParser(std::string(data));
+        parser.BuildHeader(std::vector<std::string>{std::to_string(counter), std::string(FILE_NAME), std::to_string(file_size)});
+        counter++;
+        int size = sendto(sockfd, parser.BuildDatagram().c_str(), BUFFER_SIZE, 0, (const struct sockaddr *) &server, sizeof(server));
+        auto t2 = current_time<std::chrono::nanoseconds>();
         current_size += size;
-        std::cout<<"file data sent. "<< (double)current_size/filesize*100 << "%\r" <<std::flush;
-        //n = recvfrom(sockfd, (char *)response, 4, 0, NULL, NULL);
+        temp_size += size;
+        
+        if (t2-t1 > 1000000000)
+        {
+            progressbar.Update(size, &temp_size);
+            t1 = t2;
+            temp_size = 0;
+        }
+        else 
+        {
+            progressbar.Update(size, NULL);
+        }
+        progressbar.PrintLine();
     }
-    file.close();
-   
+    printf("\n");
+    progressbar.PrintFinal();
+    file.close();    
     close(sockfd);
     return 0;
-}
-
-char** append(char **s, int s_size, char **a, int a_size)
-{
-    char **output = new char*[a_size+1];
-    for (int i = 0; i < s_size; i++)
-        output[i] = s[i];
-    for (int i = s_size; i < a_size; i++)
-        output[i] = a[i];
-    return output;
 }
