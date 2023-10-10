@@ -19,18 +19,18 @@ int64_t current_time()
 
 int main(int argc, char *argv[]) 
 {
-    if (argc != 3)
+    if (argc != 2)
     {
-        std::cout << "App requires 2 args:\tServer IP\tServer Port\nUsing default values:\t127.0.0.1\t5010\n";
-        const int default_argc = 3;
-        char* default_argv[default_argc] = {argv[0], (char*)"127.0.0.1", (char*)"5010"};
+        std::cout << "App requires 1 args:\tServer Port\nUsing default values:\t5010\n";
+        const int default_argc = 2;
+        char* default_argv[default_argc] = {argv[0], (char*)"5010"};
         argv = default_argv;
         argc = default_argc;
     }
     //const char SEPARATOR[] = "<SEP>";
     const int BUFFER_SIZE = 1024 * 12;
     //const in_addr_t ADDRESS = inet_addr(argv[1]);
-    const int S_PORT = std::stoi(argv[2]);
+    const int S_PORT = std::stoi(argv[1]);
 
     int sockfd;
     char recv_data[BUFFER_SIZE];
