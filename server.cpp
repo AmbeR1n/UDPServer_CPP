@@ -21,11 +21,8 @@ int main(int argc, char *argv[])
 {
     if (argc != 2)
     {
-        std::cout << "App requires 1 args:\tServer Port\nUsing default values:\t5010\n";
-        const int default_argc = 2;
-        char* default_argv[default_argc] = {argv[0], (char*)"5010"};
-        argv = default_argv;
-        argc = default_argc;
+        std::cout << "App requires 1 args:\tServer Port\nUsing default values:\t5000\n";
+        return -1;
     }
     //const char SEPARATOR[] = "<SEP>";
     const int BUFFER_SIZE = 1024 * 12;

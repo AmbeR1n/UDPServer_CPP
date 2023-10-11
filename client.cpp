@@ -20,19 +20,14 @@ int main(int argc, char *argv[])
 {
     if (argc != 3)
     {
-        std::cout << "App requires 2 args:\tServer IP\tServer Port\nUsing default values:\t127.0.0.1\t5010\n";
-        const int default_argc = 3;
-        char* default_argv[default_argc] = {argv[0], (char*)"127.0.0.1", (char*)"5010"};
-        argv = default_argv;
-        argc = default_argc;
+        std::cout << "App requires 2 args:\tServer IP\tServer Port\nFor example:\t127.0.0.1\t5000\n";
+        return -1;
     }
-
     const int BUFFER_SIZE = 1024 * 12; // 12kB
     //const char SEPARATOR[] = "<SEP>";
     const char *FILE_NAME = "train.txt";
     const char *ADDRESS = argv[1];
     const int S_PORT = strtol(argv[2], NULL, 10);
-
     int sockfd;
     //char response[100];
     struct sockaddr_in server;
@@ -43,16 +38,14 @@ int main(int argc, char *argv[])
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
-    
     // Filling server information
     memset(&server, 0, sizeof(server));
     server.sin_family = AF_INET;
     server.sin_port = htons(S_PORT);
-    inet_pton(AF_INET, ADDRESS, &server.sin_addr);
-
+    server.sin_addr.s_addr = inet_addr(ADDRESS);
     // Collecting file info
     std::filesystem::path filepath("upload/"+std::string(FILE_NAME));
-    long file_size = std::filesystem::file_size(filepath) * 5;
+    long file_size = std::filesystem::file_size(filepath);
 
     // Sending file
     std::ifstream file;
@@ -76,7 +69,6 @@ int main(int argc, char *argv[])
         auto t2 = current_time<std::chrono::nanoseconds>();
         current_size += size;
         temp_size += size;
-        
         if (t2-t1 > 1000000000)
         {
             progressbar.Update(size, &temp_size);
