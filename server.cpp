@@ -17,7 +17,7 @@ int64_t current_time()
     return std::chrono::duration_cast<T>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
     if (argc != 2)
     {
@@ -41,15 +41,15 @@ int main(int argc, char *argv[])
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
-    
+
     memset(&server, 0, sizeof(server));
     // Filling server information
     server.sin_family = AF_INET; // IPv4
     server.sin_port = htons(S_PORT);
     server.sin_addr.s_addr = INADDR_ANY;
-    
+
     // Bind the socket with the server address
-    if ( bind(sockfd, (const struct sockaddr *)&server, 
+    if ( bind(sockfd, (const struct sockaddr *)&server,
             sizeof(server)) < 0 )
     {
         perror("bind failed");
@@ -71,12 +71,12 @@ int main(int argc, char *argv[])
         auto t1 = current_time<std::chrono::nanoseconds>();
         int temp_size = 0;
         long prev_dgram = std::stol(header_data[0]);
-        while ((size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, NULL, NULL)) < 1)
+        while ((size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, NULL, NULL)) >= 1)
         {
             parser = DatagramParser(recv_data);
             parser.ExtractHeader();
             parser.ExtractTail();
-            current_size += parser.DataSize();   
+            current_size += parser.DataSize();
             temp_size += parser.DataSize();
             auto t2 = current_time<std::chrono::nanoseconds>();
             if (t2-t1 > 1000000000)
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
                t1 = t2;
                temp_size = 0;
             }
-            else 
+            else
             {
                 progressbar.Update(size, NULL);
             }
