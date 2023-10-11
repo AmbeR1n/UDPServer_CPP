@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
         std::cout << "App requires 2 args:\tServer IP\tServer Port\nFor example:\t127.0.0.1\t5000\n";
         return -1;
     }
-    const int BUFFER_SIZE = 1024 * 12; // 12kB
+    const int BUFFER_SIZE = 500; // 1.5kB
     //const char SEPARATOR[] = "<SEP>";
     const char *FILE_NAME = "train.txt";
     const char *ADDRESS = argv[1];
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     server.sin_addr.s_addr = inet_addr(ADDRESS);
     // Collecting file info
     std::filesystem::path filepath("upload/"+std::string(FILE_NAME));
-    long file_size = std::filesystem::file_size(filepath);
+    long file_size = std::filesystem::file_size(filepath)*0.5;
 
     // Sending file
     std::ifstream file;
@@ -60,12 +60,13 @@ int main(int argc, char *argv[])
     getchar();
     auto t1 = current_time<std::chrono::nanoseconds>();
     long counter = 1;
+    int size;
     while (current_size < file_size)
     {
         parser = DatagramParser(std::string(data));
         parser.BuildHeader(std::vector<std::string>{std::to_string(counter), std::string(FILE_NAME), std::to_string(file_size)});
         counter++;
-        int size = sendto(sockfd, parser.BuildDatagram().c_str(), BUFFER_SIZE, 0, (const struct sockaddr *) &server, sizeof(server));
+        size = sendto(sockfd, parser.BuildDatagram().c_str(), BUFFER_SIZE, 0, (const struct sockaddr *) &server, sizeof(server));
         auto t2 = current_time<std::chrono::nanoseconds>();
         current_size += size;
         temp_size += size;
@@ -83,7 +84,9 @@ int main(int argc, char *argv[])
     }
     printf("\n");
     progressbar.PrintFinal();
-    file.close();    
+    for (int i = 0; i<20000; i++)
+        size = sendto(sockfd, "<END>", BUFFER_SIZE, 0, (const struct sockaddr *) &server, sizeof(server));
+    file.close();
     close(sockfd);
     return 0;
 }

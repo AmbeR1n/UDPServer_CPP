@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
         return -1;
     }
     //const char SEPARATOR[] = "<SEP>";
-    const int BUFFER_SIZE = 1024 * 12;
+    const int BUFFER_SIZE = 1500;
     //const in_addr_t ADDRESS = inet_addr(argv[1]);
     const int S_PORT = std::stoi(argv[1]);
 
@@ -52,16 +52,16 @@ int main(int argc, char *argv[])
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
-    std::cout << "Server started on " << inet_ntoa(server.sin_addr) << ":" << htons(server.sin_port) << std::endl;
+    //std::cout << "Server started on " << inet_ntoa(server.sin_addr) << ":" << htons(server.sin_port) << std::endl;
     while (true)
     {
-        printf("Waiting for file data...\n");
+        //printf("Waiting for file data...\n");
         int size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, NULL, NULL);
         DatagramParser parser = DatagramParser(recv_data);
         std::vector<std::string> header_data = parser.GetHeader();
         long file_size = std::stol(header_data[2].c_str());
         std::string filename = header_data[1];
-        std::cout << "file name: " << filename << " / " << "file size: " << file_size << std::endl;
+        //std::cout << "file name: " << filename << " / " << "file size: " << file_size << std::endl;
         //std::filesystem::path p("download/"+filename);
         //ProgressBar progressbar(file_size);
         long current_size = 0;//parser.DataSize();
@@ -70,6 +70,8 @@ int main(int argc, char *argv[])
         // long prev_dgram = std::stol(header_data[0]);
         while ((size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, NULL, NULL)) >= 1)
         {
+            if (strcmp(recv_data, "<END>") == 0)
+                break;
         //     parser = DatagramParser(recv_data);
         //     parser.ExtractHeader();
         //     parser.ExtractTail();
@@ -90,14 +92,13 @@ int main(int argc, char *argv[])
         //     long dgram_counter = std::stol(header_data[0]);
         //     if (dgram_counter - prev_dgram > 1)
         //     {
-        //         //printf("                                                          \r%s\t%ld\t%ld\t%ld\n", tail_str.c_str(), dgram_counter, prev_dgram, dgram_counter-prev_dgram);
+        //         printf("                                                          \r%s\t%ld\t%ld\t%ld\n", tail_str.c_str(), dgram_counter, prev_dgram, dgram_counter-prev_dgram);
         //     }
         //     prev_dgram = dgram_counter;
         //     progressbar.PrintLine();
-        }
-        if (size == -1)
-            std::cout << "size = -1";
-        printf("\n%lu\t%lu\t%.1f\n", file_size, current_size, static_cast<double>(file_size - current_size)/file_size*100);
+        }   
+        std::cout << current_size << "\t" << file_size << "\t" << (1-static_cast<double>(current_size)/file_size)*100 << std::endl;
+        break;
         //progressbar.PrintFinal();
         //file.close();
     }
