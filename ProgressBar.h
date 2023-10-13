@@ -47,22 +47,22 @@ struct Speed
 class ProgressBar
 {
 private:
-    uint64_t duration;
+    long duration;
     int count;
-    uint64_t start;
+    long start;
     char reached;
     char unreached;
     double progress;
     double sum_speed;
-    uint64_t size;
+    long size;
     Speed speed;
-    std::string progress_bar;
+    char* progress_bar;
     double Conversion_Factor(double value);
     std::string Conversion_Unit(double value);
 public:
-    ProgressBar(uint64_t size_);
+    ProgressBar(long size_);
     void PrintLine();
     void PrintFinal();
-    void Update(int sent_size, int* temp_size);
+    void Update(long sent_size);
     double Progress();
 };

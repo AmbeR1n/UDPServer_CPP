@@ -1,17 +1,10 @@
-all: output server client 
+all: output reciever sender
 
 output:
-	mkdir -p output
+	mkdir output	
 
-server:
-	g++ -O2 -Wall -Wextra -Wshadow -pedantic server.cpp ProgressBar.cpp DatagramParser.cpp -o output/server
+reciever:
+	g++ -O2 -Wall -Wextra -Wshadow -pedantic reciever.cpp ProgressBar.cpp Datagram.cpp -o output/reciever
 
-client:
-	g++ -O2 -Wall -Wextra -Wshadow -pedantic client.cpp ProgressBar.cpp DatagramParser.cpp -o output/client
-
-s_run:
-	./output/server
-
-c_run:
-	./output/client
-
+sender:
+	g++ -O2 -Wall -Wextra -Wshadow -pedantic sender.cpp ProgressBar.cpp Datagram.cpp -o output/sender
