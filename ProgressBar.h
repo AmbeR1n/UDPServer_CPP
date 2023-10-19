@@ -1,4 +1,7 @@
+#ifndef PROGRESSBAR_H
+#define PROGRESSBAR_H
 #include <string>
+
 
 enum class Units
 {
@@ -47,9 +50,9 @@ struct Speed
 class ProgressBar
 {
 private:
-    long duration;
+    
     int count;
-    long start;
+    
     char reached;
     char unreached;
     double progress;
@@ -60,9 +63,13 @@ private:
     double Conversion_Factor(double value);
     std::string Conversion_Unit(double value);
 public:
-    ProgressBar(long size_);
+    int start;
+    int duration;
+    ProgressBar(long size_, int start_time);
     void PrintLine();
     void PrintFinal();
-    void Update(long sent_size);
+    void Update(long sent_size, int time);
     double Progress();
 };
+
+#endif

@@ -1,11 +1,6 @@
-#include <arpa/inet.h>
-#include <iostream>
 #include <fstream>
-#include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <cstring>
 #include <netinet/in.h>
 #include <filesystem>
 #include "ProgressBar.h"
@@ -21,13 +16,13 @@ int main(int argc, char *argv[])
 {
     if (argc != 2)
     {
-        std::cout << "App requires 1 args:\tServer Port\nUsing default values:\t5000\n";
+        printf("App requires 1 args:\tServer Port\nUsing default values:\t5000\n");
         return -1;
     }
     //const char SEPARATOR[] = "<SEP>";
     const int BUFFER_SIZE = 12*1024;
     //const in_addr_t ADDRESS = inet_addr(argv[1]);
-    const int S_PORT = std::stoi(argv[1]);
+    const int S_PORT = std::strtol(argv[1], nullptr, 10);
 
     
     char recv_data[BUFFER_SIZE];
@@ -63,16 +58,17 @@ int main(int argc, char *argv[])
         int size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, (struct sockaddr *) &sender, &client_length);
         Datagram datagram = Datagram(recv_data);
         if (datagram.data_type == Filename)
-            file_name = datagram.data;
+            file_name = datagram.GetData();
 
         size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, (struct sockaddr *) &sender, &client_length);
         if (datagram.data_type == Filesize) 
-            file_size = *(int*)datagram.data;
+            file_size = *(int*)datagram.GetData();
 
         std::filesystem::path p("download/"+std::string(file_name));
-        ProgressBar progressbar(file_size);
+        
 
         auto t1 = current_time<std::chrono::nanoseconds>();
+        ProgressBar progressbar(file_size, t1);
         int current_size = 0;
         int loss = 0;
         int temp_size = 0;
@@ -89,13 +85,9 @@ int main(int argc, char *argv[])
             auto t2 = current_time<std::chrono::nanoseconds>();
             if (t2-t1 > 1000000000)
             {
-               progressbar.Update(size, &temp_size);
+               progressbar.Update(temp_size, t2);
                t1 = t2;
                temp_size = 0;
-            }
-            else
-            {
-                progressbar.Update(size, NULL);
             }
             int dgram_counter = datagram.counter;
 
@@ -103,6 +95,7 @@ int main(int argc, char *argv[])
                 loss += dgram_counter - prev_dgram - 1;
             prev_dgram = dgram_counter;
         } 
+        progressbar.Update(temp_size, t1);
         printf("%d\t%d\t%.3f\t%d\t%d\n", current_size, file_size, (1-static_cast<double>(current_size)/file_size)*100, loss, prev_dgram);
         progressbar.PrintFinal();
         

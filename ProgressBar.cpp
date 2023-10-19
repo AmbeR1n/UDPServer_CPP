@@ -1,14 +1,6 @@
 #include "ProgressBar.h"
 #include <chrono>
-#include <iostream>
-#include <iomanip>
 #include <cstring>
-
-template<typename T>
-uint64_t current_time()
-{
-    return std::chrono::duration_cast<T>(std::chrono::system_clock::now().time_since_epoch()).count();
-}
 
 double ProgressBar::Conversion_Factor(double value)
 {
@@ -55,7 +47,7 @@ std::string ProgressBar::Conversion_Unit(double value)
     return unit;
 }
 
-ProgressBar::ProgressBar(long size_)
+ProgressBar::ProgressBar(long size_, int s_time)
 {
     size = size_;
     reached = '+';
@@ -65,26 +57,26 @@ ProgressBar::ProgressBar(long size_)
     progress = 0;
     progress_bar = new char[20];
     memset(progress_bar, unreached, 20);
-    start = current_time<std::chrono::nanoseconds>();
+    start = s_time;
 }
 
 void ProgressBar::PrintLine()
 {
-    printf("%02lu:%02lu\t%.1f%%\t%s\t%.2f %s\t%lu        \r", duration/static_cast<int>(Units::Nanoseconds)/60, duration/static_cast<int>(Units::Nanoseconds)%60, progress, (const char*)progress_bar, speed.Calculate(), speed.unit.c_str(), size);
+    printf("                                                                     \r");
+    printf("%02d:%02d\t%.1f%%\t%s\t%.2f %s\t%lu\r", duration/static_cast<int>(Units::Nanoseconds)/60, duration/static_cast<int>(Units::Nanoseconds)%60, progress, (const char*)progress_bar, speed.Calculate(), speed.unit.c_str(), size);
     fflush(stdout);
 }
 
 void ProgressBar::PrintFinal()
 {
-    double final_speed = (double)progress/100*size/duration*static_cast<int>(Units::Nanoseconds);
-    printf("%02lu:%02lu\t%.1f%%\t%s\t%.5f %s\n", duration/static_cast<int>(Units::Nanoseconds)/60, duration/static_cast<int>(Units::Nanoseconds)%60, progress, 
+    double final_speed = progress / 100 * size / duration * static_cast<int>(Units::Nanoseconds);
+    printf("%02d:%02d\t%.1f%%\t%s\t%.5f %s\n", duration / static_cast<int>(Units::Nanoseconds)/60, duration / static_cast<int>(Units::Nanoseconds)%60, progress, 
                                             (const char*)progress_bar, final_speed / Conversion_Factor(final_speed), Conversion_Unit(final_speed).c_str());
 }
 
-void ProgressBar::Update(long temp_size)
+void ProgressBar::Update(long temp_size, int time)
 {
-    duration = current_time<std::chrono::nanoseconds>() - start;
-
+    duration = time - start;
     progress += (double)temp_size/size*100;
     memset(progress_bar, reached, (int)progress / 5);
     double rate = (double)temp_size;

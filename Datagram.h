@@ -6,21 +6,24 @@
 class Datagram
 {
 public:
-    const int head_len = 128;
     Datatype data_type;
     int data_len;
     int counter;
-    unsigned char* header;
-    char* data;
     Datagram(const char* in_data, int count, int datatype, int datalen);
     Datagram(const char* datagram);
     Datagram();
-    // ~Datagram();
-    void GetHeader();
-    void SetHeader();
+    ~Datagram();
+    void SetData(char* _data, int _data_len);
+    char* GetData();
     const char* GetDatagram();
     int DatagramSize() { return head_len + data_len; }
     Datagram operator=(Datagram other);
+private:
+    const int head_len = 128;
+    char* header;
+    char* data;
+    void GetHeader();
+    void SetHeader();
 };
 
 #endif
