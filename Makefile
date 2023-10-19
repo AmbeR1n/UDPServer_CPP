@@ -6,7 +6,7 @@ output:
 check: sender_check receiver_check
 
 receiver_check:
-	g++ -Wall -Wextra -Wshadow -pedantic receiver.cpp ProgressBar.cpp Datagram.cpp -o output/receiver
+	g++ -g -Wall -Wextra -Wshadow -pedantic receiver.cpp ProgressBar.cpp Datagram.cpp -o output/receiver
 
 sender_check:
 	g++ -g -Wall -Wextra -Wshadow -pedantic main_sender.cpp ProgressBar.cpp Datagram.cpp Sender.cpp -o output/sender

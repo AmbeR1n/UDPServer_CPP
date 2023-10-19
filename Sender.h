@@ -40,7 +40,7 @@ private:
     int socketfd;
     bool is_recieving;
     char* resend_list;
-    Datagram* datagram_stack;
+    Datagram** datagram_stack;
     static void Receive(int socket, int buff_size, char* buffer, bool* flag);
     void Resend();
 };

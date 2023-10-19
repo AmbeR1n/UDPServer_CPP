@@ -11,12 +11,11 @@ public:
     int counter;
     Datagram(const char* in_data, int count, int datatype, int datalen);
     Datagram(const char* datagram);
-    Datagram();
     ~Datagram();
     void SetData(char* _data, int _data_len);
     char* GetData();
     const char* GetDatagram();
-    int DatagramSize() { return head_len + data_len; }
+    int DatagramSize();
     Datagram operator=(Datagram other);
 private:
     const int head_len = 128;
