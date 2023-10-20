@@ -4,7 +4,9 @@
 
 int main(int argc, char* argv[])
 { 
+    std::cout << "Before constructor" << std::endl;
     Sender* sender = new Sender(strtol(argv[1], nullptr, 10), argv[2], argv[3], argv[4]);
+    std::cout << "After constructor" << std::endl;
     sender->Send();
     delete sender;
     exit(0);

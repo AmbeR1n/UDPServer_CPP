@@ -12,7 +12,7 @@ sender_check:
 	g++ -g -Wall -Wextra -Wshadow -pedantic main_sender.cpp ProgressBar.cpp Datagram.cpp Sender.cpp -o output/sender
 
 receiver:
-	g++ main_receiver.cpp Receiver.cpp ProgressBar.cpp Datagram.cpp -o output/receiver
+	g++ receiver.cpp ProgressBar.cpp Datagram.cpp -o output/receiver
 
 sender:
 	g++ main_sender.cpp ProgressBar.cpp Datagram.cpp Sender.cpp -o output/sender

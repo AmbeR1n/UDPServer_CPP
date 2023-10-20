@@ -5,6 +5,8 @@
 #include <filesystem>
 #include "ProgressBar.h"
 #include "Datagram.h"
+#include <arpa/inet.h>
+#include <iostream>
 
 template<typename T>
 int64_t current_time()
@@ -48,7 +50,7 @@ int main(int argc, char *argv[])
     else exit(EXIT_FAILURE);
 
     
-    //std::cout << "Server started on " << inet_ntoa(reciever.sin_addr) << ":" << htons(reciever.sin_port) << std::endl;
+    std::cout << "Server started on " << inet_ntoa(reciever.sin_addr) << ":" << htons(reciever.sin_port) << std::endl;
     while (true)
     {
         char* file_name = (char*)"template.txt";
@@ -56,13 +58,16 @@ int main(int argc, char *argv[])
         
         int size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, (struct sockaddr *) &sender, &client_length);
         Datagram datagram = Datagram(recv_data, size);
-        if (datagram.data_type == Filename)
+        if (datagram.data_type == Filename){
             file_name = datagram.GetData();
-
+            printf("File name received\n");
+        }
         size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, (struct sockaddr *) &sender, &client_length);
         datagram = Datagram(recv_data, size);
-        if (datagram.data_type == Filesize) 
+        if (datagram.data_type == Filesize){ 
             file_size = *(int*)datagram.GetData();
+            printf("File size received\n");
+        }
         std::filesystem::path p("download/"+std::string(file_name));
 
         auto t1 = current_time<std::chrono::nanoseconds>();
