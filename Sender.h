@@ -11,9 +11,9 @@ struct File
 {
     std::ifstream stream;
     long size;
-    char* path;
+    std::filesystem::path path;
     File() {size = 0; path = (char*)"";};
-    File(char* _path) 
+    File(std::filesystem::path _path) 
     {
         path = _path;
         stream.open(_path);
@@ -26,9 +26,7 @@ class Sender
 public:
     Sender(int _stack_size, char* recv_addr, char* port, char* _path);
     ~Sender();
-    void SetFile(const char* file_path);
     void Send();
-    
 
 private:
     const int BUFFER = 60*1024;

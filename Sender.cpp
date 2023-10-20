@@ -3,19 +3,20 @@
 #include <cstring>
 #include <unistd.h>
 #include <iostream>
+#include <filesystem>
 
 Sender::Sender(int _stack_size, char *recv_addr, char *port, char* _file)
 {
+    char* folder = (char*)"upload";
     is_recieving = false;
     stack_size = _stack_size;
-    file = File(_file);
+    file = File((char*)std::filesystem::path(folder, _file).c_str());
     socketfd = socket(AF_INET, SOCK_DGRAM, 0);
     // Creating socket file descriptor
     if (socketfd < 0 ) {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
-
     // Filling receiver information
     memset(&receiver, 0, sizeof(receiver));
     receiver.sin_family = AF_INET;
@@ -38,16 +39,6 @@ Sender::~Sender()
     fflush(stdout);
 }
 
-// Closes file if one was opened and opens file at file_path path.
-void Sender::SetFile(const char* path)
-{
-    if (file.stream.is_open())
-    {
-        file.stream.close();
-    }
-    file.stream.open(path, std::ios::in);
-}
-
 void Sender::Receive(int socket, int buff_size, char* buffer, bool* flag)
 {
     *flag = true;
@@ -59,23 +50,35 @@ void Sender::Send()
 {
     if (!file.stream.is_open())
         return;
+    int size;
     char* buffer = new char[BUFFER];
+    {
+        char file_data[sizeof file.size];
+        memcpy(file_data, (char*)&file.size, sizeof file.size);
+        std::unique_ptr<Datagram> name_datagram(new Datagram(file.path.filename().c_str(), 0, 0, strlen(file.path.filename().c_str())));
+        size = sendto(socketfd, name_datagram->GetDatagram(), name_datagram->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof(receiver));
+        std::unique_ptr<Datagram> size_datagram(new Datagram((const char*)file_data, 1, 1, strlen((const char*)file_data)));
+        size = sendto(socketfd, size_datagram->GetDatagram(), size_datagram->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof(receiver));
+    }
     while (true)
     {
         file.stream.read(buffer, BUFFER);
         datagram_stack[datagram_counter%stack_size] = new Datagram((const char*)buffer, datagram_counter, 2, BUFFER);
-        int size = sendto(socketfd, datagram_stack[datagram_counter%stack_size]->GetDatagram(), datagram_stack[datagram_counter%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
+        size = sendto(socketfd, datagram_stack[datagram_counter%stack_size]->GetDatagram(), datagram_stack[datagram_counter%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof(receiver));
+        printf("%d, %d\n", socketfd, size);
         datagram_counter++;
-        //printf("%d\n", datagram_counter%stack_size);
         fflush(stdout);
-        if (!is_recieving)
-            receive = std::async(std::launch::async, Receive, socketfd, stack_size*0.5*sizeof(int), resend_list, &is_recieving);
-        if (resend_list[0] != '\0')
-            Resend();
-        if (file.stream.peek() == EOF)
+        if (file.stream.peek() != EOF)
         {
-            break;
+            if (!is_recieving)
+                receive = std::async(std::launch::async, Receive, socketfd, stack_size*0.5*sizeof(int), resend_list, &is_recieving);
+            if (resend_list[0] != '\0')
+                Resend();
+            continue;
         }
+        break;
+        
+        
     }
     printf("Sending completed");
     fflush(stdout);

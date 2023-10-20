@@ -14,11 +14,12 @@ Datagram::Datagram(const char *in_data, int count, int datatype, int datalen)
     SetHeader();
 }
 // Separate header and data from a given datagram
-Datagram::Datagram(const char *datagram)
+Datagram::Datagram(const char *datagram, int data_size)
 {
     header = new char[head_len];
     memcpy(header, datagram, head_len);
     GetHeader();
+    data_len = data_size-128;
     data = new char[data_len];
     memcpy(data, datagram + head_len, data_len);
 }
@@ -56,7 +57,6 @@ char *Datagram::GetData()
 
 const char *Datagram::GetDatagram()
 {
-    std::cout << header << std::endl;
     return (std::string(header) + data).c_str();
 }
 

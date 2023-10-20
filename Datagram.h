@@ -10,7 +10,7 @@ public:
     int data_len;
     int counter;
     Datagram(const char* in_data, int count, int datatype, int datalen);
-    Datagram(const char* datagram);
+    Datagram(const char* datagram, int data_size);
     ~Datagram();
     void SetData(char* _data, int _data_len);
     char* GetData();
