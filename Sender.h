@@ -15,7 +15,7 @@ public:
     void Send();
 
 private:
-    const int BUFFER = 60*1024;
+    const int BUFFER = 60*1024 - 128; //128 b - header size 
     std::future<void> receive;
     File file;
     struct sockaddr_in receiver;

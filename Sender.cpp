@@ -52,7 +52,7 @@ void Sender::Send()
     if (!file.stream.is_open())
         return;
     int size;
-    char* buffer = new char[BUFFER];
+    char* buffer = new char[BUFFER-128];
     std::cout << "Sending to " << inet_ntoa(receiver.sin_addr) << ":" << htons(receiver.sin_port) << std::endl;
     {
         Datagram* name_datagram = (new Datagram(file.path.filename().c_str(), 0, 0, (int)strlen(file.path.filename().c_str()))); 
@@ -66,14 +66,14 @@ void Sender::Send()
     std::cout << "File data sending completed" << std::endl;
     while (true)
     {
-        file.stream.read(buffer, BUFFER);
+        file.stream.read(buffer, BUFFER-128);
         if (datagram_stack[datagram_counter%stack_size] != NULL)
             delete datagram_stack[datagram_counter%stack_size];
         std::cout << datagram_counter << std::endl;
-        datagram_stack[datagram_counter%stack_size] = new Datagram((const char*)buffer, datagram_counter, 2, BUFFER);
-	size = sendto(socketfd, datagram_stack[datagram_counter%stack_size]->GetDatagram(), datagram_stack[datagram_counter%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
-        //std::cout << size << std::endl;
-	if (datagram_stack[datagram_counter%stack_size]->DatagramSize() != size)
+        datagram_stack[datagram_counter%stack_size] = new Datagram((const char*)buffer, datagram_counter, 2, strlen(buffer));
+	    size = sendto(socketfd, datagram_stack[datagram_counter%stack_size]->GetDatagram(), datagram_stack[datagram_counter%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
+        std::cout << size << std::endl;
+	    if (datagram_stack[datagram_counter%stack_size]->DatagramSize() != size)
         {
             std::cout << "Something went wrong with sending data. " << size << "was sent, but " << datagram_stack[datagram_counter%stack_size]->DatagramSize() << "was expected" << std::endl;
         }
@@ -85,7 +85,7 @@ void Sender::Send()
         if (file.stream.peek() == EOF)
             break;
     }
-    for (int i = 0; i<20000; i++)
+    for (int i = 0; i<1000; i++)
         sendto(socketfd, "<END>", 6, 0, (const struct sockaddr *) &receiver, sizeof(receiver));
     printf("Sending completed");
     fflush(stdout);
