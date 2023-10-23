@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "Server started on " << inet_ntoa(reciever.sin_addr) << ":" << htons(reciever.sin_port) << " with soket fd " << sockfd << std::endl;
+    std::cout << "Server started on " << inet_ntoa(reciever.sin_addr) << ":" << htons(reciever.sin_port) << std::endl;
     //while (true)
     {
         char* file_name = (char*)"";
@@ -107,7 +107,8 @@ int main(int argc, char *argv[])
             prev_dgram = curr_dgram;
         } 
         progressbar.Update(temp_size, t1);
-        printf("%d\t%d\t%.3f\t%d\t%s\n", current_size, file_size, (1-static_cast<double>(current_size)/file_size)*100, loss, file_name);
+        std::cout << file_name << "\n";
+        printf("%s\t%d\t%d\t%.3f\t%d\n", file_name, current_size, file_size, (1-static_cast<double>(current_size)/file_size)*100, loss);
         progressbar.PrintFinal();
     }
     close(sockfd);
