@@ -5,10 +5,6 @@
 
 int main(int argc, char** argv)
 {
-    int arr1[10];
-    int* arr2 = new int[12];
-    for (int i = 0; i < 15; i++)
-        printf("%d\n", arr2[i]);
+    std::cout << sizeof(bool) << " " << sizeof(char);
     return 0;
-    delete[] arr2;
 }

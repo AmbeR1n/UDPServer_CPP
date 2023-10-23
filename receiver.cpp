@@ -62,9 +62,8 @@ int main(int argc, char *argv[])
         int current_size = 0;
         int loss = 0;
         int temp_size = 0;
-        int prev_dgram = 2;
+        int prev_dgram = 1;
         int size;
-        int var = 2;
         while ((size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, (struct sockaddr *) &sender, &sender_length)) >= 1)
         {
             if (strcmp(recv_data, "<END>") == 0)
@@ -74,13 +73,13 @@ int main(int argc, char *argv[])
             if (datagram->data_type == Filename)
             {
                 char* file_name = datagram->GetData();
-                std::cout << "File name received " << file_name << " from "<< inet_ntoa(sender.sin_addr) << "\n";
+                //std::cout << "File name received " << file_name << " from "<< inet_ntoa(sender.sin_addr) << "\n";
                 p = std::filesystem::path("download/"+std::string(file_name));
             }
             if (datagram->data_type == Filesize)
             { 
                 file_size = *(int*)datagram->GetData();
-                std::cout << "File size received " << file_size << " from "<< inet_ntoa(sender.sin_addr) << "\n";
+                //std::cout << "File size received " << file_size << " from "<< inet_ntoa(sender.sin_addr) << "\n";
                 t1 = current_time<std::chrono::nanoseconds>();
                 progressbar = ProgressBar(file_size, t1);
             }
@@ -97,16 +96,19 @@ int main(int argc, char *argv[])
                     //progressbar.PrintLine();
                 }
                 int curr_dgram = datagram->counter;
-                
-                if (curr_dgram - prev_dgram > 1)
+                //std::cout << curr_dgram << "\n";
+
+                if (curr_dgram - prev_dgram != 1)
                 {
+                    int stop = curr_dgram - 1;
+                    int start = prev_dgram + 1;
                     //std::cout << curr_dgram - prev_dgram << std::endl;
-                    loss += curr_dgram - prev_dgram - 1;
+                    loss += stop - start - 1;
                     char resend_req[2 * sizeof loss];
-                    memcpy(resend_req, &prev_dgram, sizeof prev_dgram);
-                    memcpy(resend_req+sizeof prev_dgram, &curr_dgram, sizeof curr_dgram);
-                    size = sendto(sockfd, resend_req, 2 * sizeof loss, 0, (const struct sockaddr *)&sender, (socklen_t)sizeof sender);
-                    std::cout << "Datagrams from " << prev_dgram << " to " << curr_dgram << " were lost. Sending request to resend lost data\n";
+                    memcpy(resend_req, &(start), sizeof start);
+                    memcpy(resend_req+sizeof start, &(stop), sizeof stop);
+                    //size = sendto(sockfd, resend_req, 2 * sizeof loss, 0, (const struct sockaddr *)&sender, (socklen_t)sizeof sender);
+                    std::cout << "Datagrams from " << start << " to " << stop << " were lost. Sending request to resend lost data\n";
                 }
                 prev_dgram = curr_dgram;
             }

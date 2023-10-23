@@ -44,15 +44,19 @@ int main(int argc, char *argv[])
     // Collecting file info
     std::filesystem::path filepath("upload/"+std::string(FILE_NAME));
     long file_size = std::filesystem::file_size(filepath) * 10;
-    
+    bool complete_list[1000000];
+        for (int i = 0; i<1000000; i++)
+            complete_list[i] = false;
     char file_data[sizeof file_size];
     memcpy(file_data, (char*)&file_size, sizeof file_size);
     int size;
     {
         std::unique_ptr<Datagram> name_datagram(new Datagram(FILE_NAME, 0, 0, strlen(FILE_NAME)));
         size = sendto(sockfd, name_datagram->GetDatagram(), name_datagram->DatagramSize(), 0, (const struct sockaddr *) &reciever, sizeof(reciever));
+        complete_list[0] = true;
         std::unique_ptr<Datagram> size_datagram(new Datagram((const char*)file_data, 1, 1, strlen(file_data)));
         size = sendto(sockfd, size_datagram->GetDatagram(), size_datagram->DatagramSize(), 0, (const struct sockaddr *) &reciever, sizeof(reciever));
+        complete_list[1] = true;
     }
     // Sending file
     std::ifstream file;
@@ -80,7 +84,6 @@ int main(int argc, char *argv[])
         file.read(data, BUFFER_SIZE);
         datagram->counter++;
         datagram->SetData(data, strlen(data));
-        
         current_size += size;
         int t2 = current_time<std::chrono::nanoseconds>();
         temp_size += size;

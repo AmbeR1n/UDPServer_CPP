@@ -1,10 +1,6 @@
 #include "Sender.h"
-#include "ProgressBar.h"
-//#include "File.h"
-#include <cstring>
 #include <unistd.h>
 #include <iostream>
-#include <filesystem>
 
 Sender::Sender(int _stack_size, char *recv_addr, char *port, char* _file)
 {
@@ -67,6 +63,16 @@ void Sender::Send()
     std::cout << "File data sending completed" << std::endl;
     while (true)
     {
+        // if (!is_recieving)
+        // {
+        //     receive = std::async(std::launch::async, Receive, socketfd, stack_size*0.5*sizeof(int), resend_list, &is_recieving);
+        // }
+        // if (resend_list[0] != '\0')
+        // {
+        //     std::cout << "Starting resending data\n";
+        //     Resend();
+        //     std::cout << "Resending completed\n";
+        // }
         file.stream.read(buffer, BUFFER);
         if (datagram_stack[datagram_counter%stack_size] != NULL)
             delete datagram_stack[datagram_counter%stack_size];
@@ -79,10 +85,7 @@ void Sender::Send()
             std::cout << "Something went wrong with sending data. " << size << "was sent, but " << datagram_stack[datagram_counter%stack_size]->DatagramSize() << "was expected" << std::endl;
         }
         datagram_counter++;
-        if (!is_recieving)
-                receive = std::async(std::launch::async, Receive, socketfd, stack_size*0.5*sizeof(int), resend_list, &is_recieving);
-        if (resend_list[0] != '\0')
-            Resend();
+        
         if (file.stream.peek() == EOF)
             break;
     }
@@ -95,14 +98,16 @@ void Sender::Send()
 
 void Sender::Resend()
 {
-    resend_list[0] = '\0';
-    for (int i = 0; i < int(stack_size*0.5); i++)
+    int first = *(int*)(resend_list);
+    int second = *(int*)(resend_list+sizeof(int));
+    if (second - first < (int)(stack_size*0.5))
+        return;
+    for (int i = first; i < second; i++)
     {
-        int resend_count = *(int*)(resend_list + i * sizeof(int));
-        if (datagram_stack[resend_count%stack_size]->counter == resend_count)
+        if (datagram_stack[i%stack_size]->counter == i)
         {
-            sendto(socketfd, datagram_stack[resend_count%stack_size]->GetDatagram(), datagram_stack[resend_count%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
+            sendto(socketfd, datagram_stack[i%stack_size]->GetDatagram(), datagram_stack[i%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
         }
     }
-    
+    resend_list[0] = '\0';
 }
