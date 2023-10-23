@@ -79,8 +79,9 @@ void Sender::Send()
             delete datagram_stack[datagram_counter%stack_size];
         std::cout << datagram_counter << std::endl;
         datagram_stack[datagram_counter%stack_size] = new Datagram((const char*)buffer, datagram_counter, 2, BUFFER);
-        size = sendto(socketfd, datagram_stack[datagram_counter%stack_size]->GetDatagram(), datagram_stack[datagram_counter%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof(receiver));
-        if (datagram_stack[datagram_counter%stack_size]->DatagramSize() != size)
+	size = sendto(socketfd, datagram_stack[datagram_counter%stack_size]->GetDatagram(), datagram_stack[datagram_counter%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
+        //std::cout << size << std::endl;
+	if (datagram_stack[datagram_counter%stack_size]->DatagramSize() != size)
         {
             std::cout << "Something went wrong with sending data. " << size << "was sent, but " << datagram_stack[datagram_counter%stack_size]->DatagramSize() << "was expected" << std::endl;
         }

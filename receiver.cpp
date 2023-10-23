@@ -70,18 +70,18 @@ int main(int argc, char *argv[])
             if (strcmp(recv_data, "<END>") == 0)
                 break;
             std::unique_ptr<Datagram> datagram(new Datagram(recv_data));
-            //printf("%d\t%d\t%d\n", datagram->counter, datagram->data_type, datagram->data_len);
+            printf("%d\t%d\t%d\n", datagram->counter, datagram->data_type, datagram->data_len);
             if (datagram->data_type == Filesize)
             { 
                 file_size = *(int*)datagram->GetData();
-                std::cout << "File size received\n" << std::flush;
+                std::cout << "File size received " << file_size << " from "<< inet_ntoa(sender.sin_addr) << ":" << htons(sender.sin_port);
                 t1 = current_time<std::chrono::nanoseconds>();
                 progressbar = ProgressBar(file_size, t1);
             }
             if (datagram->data_type == Filename)
             {
                 file_name = datagram->GetData();
-                std::cout << "File name received\n" << std::flush;
+                std::cout << "File name received " << file_name << " from "<< inet_ntoa(sender.sin_addr) << ":" << htons(sender.sin_port);
                 std::filesystem::path p("download/"+std::string(file_name));
             }
             if (datagram->data_type != Data)
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
             prev_dgram = curr_dgram;
         } 
         progressbar.Update(temp_size, t1);
-        printf("%d\t%d\t%.3f\t%d\t%d\n", current_size, file_size, (1-static_cast<double>(current_size)/file_size)*100, loss, prev_dgram);
+        printf("%d\t%d\t%.3f\t%d\t%s\n", current_size, file_size, (1-static_cast<double>(current_size)/file_size)*100, loss, file_name);
         progressbar.PrintFinal();
         break;
     }
