@@ -70,12 +70,13 @@ int main(int argc, char *argv[])
             if (strcmp(recv_data, "<END>") == 0)
                 break;
             std::unique_ptr<Datagram> datagram(new Datagram(recv_data));
-            printf("%d\t%d\t%d\n", datagram->counter, datagram->data_type, datagram->data_len);
+            //printf("%d\t%d\t%d\n", datagram->counter, datagram->data_type, datagram->data_len);
             if (datagram->data_type == Filesize)
             { 
                 file_size = *(int*)datagram->GetData();
                 std::cout << "File size received " << file_size << " from "<< inet_ntoa(sender.sin_addr) << "\n";
                 t1 = current_time<std::chrono::nanoseconds>();
+                std::cout << t1 << "\n";
                 progressbar = ProgressBar(file_size, t1);
             }
             if (datagram->data_type == Filename)
@@ -84,27 +85,26 @@ int main(int argc, char *argv[])
                 std::cout << "File name received " << file_name << " from "<< inet_ntoa(sender.sin_addr) << "\n";
                 p = std::filesystem::path("download/"+std::string(file_name));
             }
-            if (datagram->data_type != Data)
+            if (datagram->data_type == Data)
             {
-                continue;
+                current_size += datagram->data_len;
+                temp_size += datagram->data_len;
+                long t2 = current_time<std::chrono::nanoseconds>();
+                if (t2-t1 > 1000000000)
+                {
+                    progressbar.Update(temp_size, t2);
+                    t1 = t2;
+                    temp_size = 0;
+                }
+                int curr_dgram = datagram->counter;
+                
+                if (curr_dgram - prev_dgram > 1)
+                {
+                    std::cout << curr_dgram - prev_dgram << std::endl;
+                    loss += curr_dgram - prev_dgram - 1;
+                }
+                prev_dgram = curr_dgram;
             }
-            current_size += datagram->data_len;
-            temp_size += datagram->data_len;
-            long t2 = current_time<std::chrono::nanoseconds>();
-            if (t2-t1 > 1000000000)
-            {
-                progressbar.Update(temp_size, t2);
-                t1 = t2;
-                temp_size = 0;
-            }
-            int curr_dgram = datagram->counter;
-            
-            if (curr_dgram - prev_dgram > 1)
-            {
-                std::cout << curr_dgram - prev_dgram << std::endl;
-                loss += curr_dgram - prev_dgram - 1;
-            }
-            prev_dgram = curr_dgram;
         } 
         progressbar.Update(temp_size, t1);
         std::cout << p << "\n";

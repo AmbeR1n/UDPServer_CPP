@@ -80,8 +80,8 @@ void Sender::Send()
         datagram_counter++;
         if (!is_recieving)
                 receive = std::async(std::launch::async, Receive, socketfd, stack_size*0.5*sizeof(int), resend_list, &is_recieving);
-            if (resend_list[0] != '\0')
-                Resend();
+        if (resend_list[0] != '\0')
+            Resend();
         if (file.stream.peek() == EOF)
             break;
     }
