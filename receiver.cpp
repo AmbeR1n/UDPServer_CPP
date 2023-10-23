@@ -82,7 +82,6 @@ int main(int argc, char *argv[])
                 file_size = *(int*)datagram->GetData();
                 std::cout << "File size received " << file_size << " from "<< inet_ntoa(sender.sin_addr) << "\n";
                 t1 = current_time<std::chrono::nanoseconds>();
-                std::cout << t1 << "\n";
                 progressbar = ProgressBar(file_size, t1);
             }
             if (datagram->data_type == Data)
@@ -95,7 +94,7 @@ int main(int argc, char *argv[])
                     progressbar.Update(temp_size, t2);
                     t1 = t2;
                     temp_size = 0;
-                    progressbar.PrintLine();
+                    //progressbar.PrintLine();
                 }
                 int curr_dgram = datagram->counter;
                 
@@ -107,13 +106,12 @@ int main(int argc, char *argv[])
                     memcpy(resend_req, &prev_dgram, sizeof prev_dgram);
                     memcpy(resend_req+sizeof prev_dgram, &curr_dgram, sizeof curr_dgram);
                     size = sendto(sockfd, resend_req, 2 * sizeof loss, 0, (const struct sockaddr *)&sender, (socklen_t)sizeof sender);
-                    std::cout << "Sent request to resend lost data\n";
+                    std::cout << "Datagrams from " << prev_dgram << " to " << curr_dgram << " were lost. Sending request to resend lost data\n";
                 }
                 prev_dgram = curr_dgram;
             }
         } 
         progressbar.Update(temp_size, t1);
-        std::cout << p << "\n";
         printf("%s\t%d\t%d\t%.3f\t%d\n", p.c_str(), current_size, file_size, (1-static_cast<double>(current_size)/file_size)*100, loss);
         progressbar.PrintFinal();
     }
