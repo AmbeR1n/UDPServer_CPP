@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "Server started on " << inet_ntoa(reciever.sin_addr) << ":" << (reciever.sin_port) << " with soket fd " << sockfd << std::endl;
+    std::cout << "Server started on " << inet_ntoa(reciever.sin_addr) << ":" << htons(reciever.sin_port) << " with soket fd " << sockfd << std::endl;
     while (true)
     {
         char* file_name = (char*)"";
@@ -74,14 +74,14 @@ int main(int argc, char *argv[])
             if (datagram->data_type == Filesize)
             { 
                 file_size = *(int*)datagram->GetData();
-                std::cout << "File size received " << file_size << " from "<< inet_ntoa(sender.sin_addr) << ":" << htons(sender.sin_port);
+                std::cout << "File size received " << file_size << " from "<< inet_ntoa(sender.sin_addr) << "\n";
                 t1 = current_time<std::chrono::nanoseconds>();
                 progressbar = ProgressBar(file_size, t1);
             }
             if (datagram->data_type == Filename)
             {
                 file_name = datagram->GetData();
-                std::cout << "File name received " << file_name << " from "<< inet_ntoa(sender.sin_addr) << ":" << htons(sender.sin_port);
+                std::cout << "File name received " << file_name << " from "<< inet_ntoa(sender.sin_addr) << "\n";
                 std::filesystem::path p("download/"+std::string(file_name));
             }
             if (datagram->data_type != Data)
