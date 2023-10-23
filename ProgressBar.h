@@ -33,12 +33,12 @@ private:
     std::string Conversion_Unit(double value);
 public:
     long start;
-    int duration;
+    long duration;
     ProgressBar();
     ProgressBar(long size_, long start_time);
     void PrintLine();
     void PrintFinal();
-    void Update(long sent_size, int time);
+    void Update(long sent_size, long time);
     double Progress();
 };
 

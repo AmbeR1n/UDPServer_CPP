@@ -67,18 +67,18 @@ ProgressBar::ProgressBar(long size_, long s_time)
 void ProgressBar::PrintLine()
 {
     printf("                                                                     \r");
-    printf("%02d:%02d\t%.1f%%\t%s\t%.2f %s\t%lu\r", duration/static_cast<int>(Units::Nanoseconds)/60, duration/static_cast<int>(Units::Nanoseconds)%60, progress, (const char*)progress_bar, speed.Calculate(), speed.unit.c_str(), size);
+    printf("%02ld:%02ld\t%.1f%%\t%s\t%.2f %s\t%lu\r", duration/static_cast<int>(Units::Nanoseconds)/60, duration/static_cast<int>(Units::Nanoseconds)%60, progress, (const char*)progress_bar, speed.Calculate(), speed.unit.c_str(), size);
     fflush(stdout);
 }
 
 void ProgressBar::PrintFinal()
 {
     double final_speed = progress / 100 * size / duration * static_cast<int>(Units::Nanoseconds);
-    printf("%02d:%02d\t%.1f%%\t%s\t%.5f %s\n", duration / static_cast<int>(Units::Nanoseconds)/60, duration / static_cast<int>(Units::Nanoseconds)%60, progress, 
+    printf("%02ld:%02ld\t%.1f%%\t%s\t%.5f %s\n", duration / static_cast<int>(Units::Nanoseconds)/60, duration / static_cast<int>(Units::Nanoseconds)%60, progress, 
                                             (const char*)progress_bar, final_speed / Conversion_Factor(final_speed), Conversion_Unit(final_speed).c_str());
 }
 
-void ProgressBar::Update(long temp_size, int time)
+void ProgressBar::Update(long temp_size, long time)
 {
     duration = time - start;
     progress += (double)temp_size/size*100;

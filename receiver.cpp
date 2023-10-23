@@ -95,13 +95,19 @@ int main(int argc, char *argv[])
                     progressbar.Update(temp_size, t2);
                     t1 = t2;
                     temp_size = 0;
+                    progressbar.PrintLine();
                 }
                 int curr_dgram = datagram->counter;
                 
                 if (curr_dgram - prev_dgram > 1)
                 {
-                    std::cout << curr_dgram - prev_dgram << std::endl;
+                    //std::cout << curr_dgram - prev_dgram << std::endl;
                     loss += curr_dgram - prev_dgram - 1;
+                    char resend_req[2 * sizeof loss];
+                    memcpy(resend_req, &prev_dgram, sizeof prev_dgram);
+                    memcpy(resend_req+sizeof prev_dgram, &curr_dgram, sizeof curr_dgram);
+                    size = sendto(sockfd, resend_req, 2 * sizeof loss, 0, (const struct sockaddr *)&sender, (socklen_t)sizeof sender);
+                    std::cout << "Sent request to resend lost data\n";
                 }
                 prev_dgram = curr_dgram;
             }

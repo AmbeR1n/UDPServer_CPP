@@ -44,6 +44,7 @@ void Sender::Receive(int socket, int buff_size, char* buffer, bool* flag)
 {
     *flag = true;
     recvfrom(socket, buffer, buff_size, 0, NULL, NULL);
+    std::cout << "Received request for resending lost data\n";
     *flag = false;
 }
 
@@ -69,10 +70,10 @@ void Sender::Send()
         file.stream.read(buffer, BUFFER);
         if (datagram_stack[datagram_counter%stack_size] != NULL)
             delete datagram_stack[datagram_counter%stack_size];
-        std::cout << datagram_counter << std::endl;
+        //std::cout << datagram_counter << std::endl;
         datagram_stack[datagram_counter%stack_size] = new Datagram((const char*)buffer, datagram_counter, 2, strlen(buffer));
 	    size = sendto(socketfd, datagram_stack[datagram_counter%stack_size]->GetDatagram(), datagram_stack[datagram_counter%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
-        std::cout << size << std::endl;
+        //std::cout << size << std::endl;
 	    if (datagram_stack[datagram_counter%stack_size]->DatagramSize() != size)
         {
             std::cout << "Something went wrong with sending data. " << size << "was sent, but " << datagram_stack[datagram_counter%stack_size]->DatagramSize() << "was expected" << std::endl;
@@ -94,7 +95,8 @@ void Sender::Send()
 
 void Sender::Resend()
 {
-    for (int i = 0; i < stack_size*0.5; i++)
+    resend_list[0] = '\0';
+    for (int i = 0; i < int(stack_size*0.5); i++)
     {
         int resend_count = *(int*)(resend_list + i * sizeof(int));
         if (datagram_stack[resend_count%stack_size]->counter == resend_count)
@@ -102,4 +104,5 @@ void Sender::Resend()
             sendto(socketfd, datagram_stack[resend_count%stack_size]->GetDatagram(), datagram_stack[resend_count%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
         }
     }
+    
 }
