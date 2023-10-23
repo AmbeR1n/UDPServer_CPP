@@ -1,5 +1,6 @@
 #include <arpa/inet.h>
 #include <fstream>
+#include <iostream>
 #include <memory>
 #include <chrono>
 #include <filesystem>
@@ -68,25 +69,28 @@ int main(int argc, char *argv[])
     ProgressBar progressbar = ProgressBar(file_size, t1);
     while (current_size < file_size)
     {
+        
         size = sendto(sockfd, datagram->GetDatagram(), datagram->DatagramSize(), 0, (const struct sockaddr *) &reciever, sizeof(reciever));
         if (file.eof())
         {
             file.clear();
             file.seekg(0);
         }
+        
         file.read(data, BUFFER_SIZE);
         datagram->counter++;
         datagram->SetData(data, strlen(data));
-
+        
         current_size += size;
         int t2 = current_time<std::chrono::nanoseconds>();
         temp_size += size;
+        
         if (t2-t1 > 1000000000)
         {
             progressbar.Update(temp_size, t2);
             t1 = t2;
             temp_size = 0;
-            progressbar.PrintLine();
+            //progressbar.PrintLine();
         }
     }
     

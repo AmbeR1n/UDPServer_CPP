@@ -9,7 +9,7 @@
 #include <iostream>
 
 template<typename T>
-int64_t current_time()
+long current_time()
 {
     return std::chrono::duration_cast<T>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
@@ -30,9 +30,8 @@ int main(int argc, char *argv[])
 
     struct sockaddr_in reciever;
     struct sockaddr_in sender;
-    socklen_t client_length = 0;
+    socklen_t sender_length = 0;
     int sockfd;
-
     memset(&sender, 0, sizeof(sender));
     memset(&reciever, 0, sizeof(reciever));
     // Filling reciever information
@@ -41,67 +40,76 @@ int main(int argc, char *argv[])
     reciever.sin_addr.s_addr = INADDR_ANY;
     
     // Creating socket file descriptor
-    if ( (sockfd = socket(AF_INET, SOCK_DGRAM, 0)) > -1 ) 
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) 
     {
-        // Bind the socket with the reciever address
-        if ( bind(sockfd, (const struct sockaddr *)&reciever, sizeof(reciever)) < 0 )
-            exit(EXIT_FAILURE);
+        perror("socket creation failed");
+        exit(EXIT_FAILURE);
     }
-    else exit(EXIT_FAILURE);
+    if (bind(sockfd, (const struct sockaddr *)&reciever, sizeof(reciever)) < 0 )
+    {
+        perror("socket binding failed");
+        exit(EXIT_FAILURE);
+    }
 
-    
-    std::cout << "Server started on " << inet_ntoa(reciever.sin_addr) << ":" << htons(reciever.sin_port) << std::endl;
+    std::cout << "Server started on " << inet_ntoa(reciever.sin_addr) << ":" << htons(reciever.sin_port) << " with soket fd " << sockfd << std::endl;
     while (true)
     {
-        char* file_name = (char*)"template.txt";
+        char* file_name = (char*)"";
         int file_size = 0;
         
-        int size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, (struct sockaddr *) &sender, &client_length);
-        Datagram datagram = Datagram(recv_data, size);
-        if (datagram.data_type == Filename){
-            file_name = datagram.GetData();
-            printf("File name received\n");
-        }
-        size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, (struct sockaddr *) &sender, &client_length);
-        datagram = Datagram(recv_data, size);
-        if (datagram.data_type == Filesize){ 
-            file_size = *(int*)datagram.GetData();
-            printf("File size received\n");
-        }
-        std::filesystem::path p("download/"+std::string(file_name));
-
-        auto t1 = current_time<std::chrono::nanoseconds>();
-        ProgressBar progressbar(file_size, t1);
+        long t1;
+        ProgressBar progressbar;
         int current_size = 0;
         int loss = 0;
         int temp_size = 0;
-        int prev_dgram = datagram.counter;
-        while ((size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, (struct sockaddr *) &sender, &client_length)) >= 1)
+        int prev_dgram = 2;
+        int size;
+        int var = 2;
+        while ((size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, (struct sockaddr *) &sender, &sender_length)) >= 1)
         {
             if (strcmp(recv_data, "<END>") == 0)
                 break;
-            datagram = Datagram(recv_data, size);
-            if (datagram.data_type != Data)
+            std::unique_ptr<Datagram> datagram(new Datagram(recv_data));
+            //printf("%d\t%d\t%d\n", datagram->counter, datagram->data_type, datagram->data_len);
+            if (datagram->data_type == Filesize)
+            { 
+                file_size = *(int*)datagram->GetData();
+                std::cout << "File size received\n" << std::flush;
+                t1 = current_time<std::chrono::nanoseconds>();
+                progressbar = ProgressBar(file_size, t1);
+            }
+            if (datagram->data_type == Filename)
+            {
+                file_name = datagram->GetData();
+                std::cout << "File name received\n" << std::flush;
+                std::filesystem::path p("download/"+std::string(file_name));
+            }
+            if (datagram->data_type != Data)
+            {
                 continue;
-            current_size += datagram.data_len;
-            temp_size += datagram.data_len;
-            auto t2 = current_time<std::chrono::nanoseconds>();
+            }
+            current_size += datagram->data_len;
+            temp_size += datagram->data_len;
+            long t2 = current_time<std::chrono::nanoseconds>();
             if (t2-t1 > 1000000000)
             {
-               progressbar.Update(temp_size, t2);
-               t1 = t2;
-               temp_size = 0;
+                progressbar.Update(temp_size, t2);
+                t1 = t2;
+                temp_size = 0;
             }
-            int dgram_counter = datagram.counter;
-
-            if (dgram_counter - prev_dgram > 1)
-                loss += dgram_counter - prev_dgram - 1;
-            prev_dgram = dgram_counter;
+            int curr_dgram = datagram->counter;
+            
+            if (curr_dgram - prev_dgram > 1)
+            {
+                std::cout << curr_dgram - prev_dgram << std::endl;
+                loss += curr_dgram - prev_dgram - 1;
+            }
+            prev_dgram = curr_dgram;
         } 
         progressbar.Update(temp_size, t1);
         printf("%d\t%d\t%.3f\t%d\t%d\n", current_size, file_size, (1-static_cast<double>(current_size)/file_size)*100, loss, prev_dgram);
         progressbar.PrintFinal();
-        
+        break;
     }
     close(sockfd);
     return 0;

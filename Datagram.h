@@ -10,19 +10,20 @@ public:
     int data_len;
     int counter;
     Datagram(const char* in_data, int count, int datatype, int datalen);
-    Datagram(const char* datagram, int data_size);
+    Datagram(const char* datagram);
     ~Datagram();
-    void SetData(char* _data, int _data_len);
+    void SetData(const char* _data, int _data_len);
     char* GetData();
     const char* GetDatagram();
     int DatagramSize();
     Datagram operator=(Datagram other);
+    
 private:
     const int head_len = 128;
-    char* header;
-    char* data;
+    char* datagram;
     void GetHeader();
     void SetHeader();
+    
 };
 
 #endif

@@ -1,7 +1,7 @@
 #ifndef PROGRESSBAR_H
 #define PROGRESSBAR_H
 #include <string>
-
+#include "Speed.h"
 
 enum class Units
 {
@@ -18,41 +18,10 @@ enum class Units
     Nanoseconds = 1000*1000*1000
 };
 
-struct Speed
-{
-    double value;
-    double unit_factor;
-    std::string unit;
-    void operator=(Speed s)
-    {
-        this->value = s.value;
-        this->unit_factor = s.unit_factor;
-        this->unit = s.unit;
-    }
-    Speed(double v, double uf, std::string u)
-    {
-        this->value = v;
-        this->unit_factor = uf;
-        this->unit = u;
-    }
-    Speed()
-    {
-        this->value = 0;
-        this->unit_factor = 1;
-        this->unit = "бит/с";
-    }
-    double Calculate()
-    {
-        return value / unit_factor;
-    }
-};
-
 class ProgressBar
 {
 private:
-    
     int count;
-    
     char reached;
     char unreached;
     double progress;
@@ -63,9 +32,10 @@ private:
     double Conversion_Factor(double value);
     std::string Conversion_Unit(double value);
 public:
-    int start;
+    long start;
     int duration;
-    ProgressBar(long size_, int start_time);
+    ProgressBar();
+    ProgressBar(long size_, long start_time);
     void PrintLine();
     void PrintFinal();
     void Update(long sent_size, int time);

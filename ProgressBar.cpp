@@ -47,7 +47,11 @@ std::string ProgressBar::Conversion_Unit(double value)
     return unit;
 }
 
-ProgressBar::ProgressBar(long size_, int s_time)
+ProgressBar::ProgressBar()
+{
+}
+
+ProgressBar::ProgressBar(long size_, long s_time)
 {
     size = size_;
     reached = '+';
@@ -80,7 +84,7 @@ void ProgressBar::Update(long temp_size, int time)
     progress += (double)temp_size/size*100;
     memset(progress_bar, reached, (int)progress / 5);
     double rate = (double)temp_size;
-    speed = Speed(rate, Conversion_Factor(rate), Conversion_Unit(rate));
+    speed.Update(rate, Conversion_Factor(rate), Conversion_Unit(rate));
 }
 
 double ProgressBar::Progress()

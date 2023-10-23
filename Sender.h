@@ -5,21 +5,7 @@
 #include <future>
 #include "Datagram.h"
 #include <cstring>
-#include <filesystem>
-
-struct File
-{
-    std::ifstream stream;
-    long size;
-    std::filesystem::path path;
-    File() {size = 0; path = (char*)"";};
-    File(std::filesystem::path _path) 
-    {
-        path = _path;
-        stream.open(_path);
-        size = std::filesystem::file_size(path);
-    }
-};
+#include "File.h"
 
 class Sender
 {
@@ -34,7 +20,7 @@ private:
     File file;
     struct sockaddr_in receiver;
     int stack_size;
-    int datagram_counter = 0;
+    int datagram_counter = 2;
     int socketfd;
     bool is_recieving;
     char* resend_list;

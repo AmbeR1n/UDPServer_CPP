@@ -2,62 +2,60 @@
 #include <cstring>
 #include <iostream>
 
-// Building datagram from given header info and data
+// Building datagram from given data and info
 Datagram::Datagram(const char *in_data, int count, int datatype, int datalen)
 {
     counter = count;
     data_type = (Datatype)datatype;
     data_len = datalen;
-    data = new char[data_len];
-    header = new char[head_len];
-    memcpy(data, in_data, data_len);
+    datagram = new char[data_len+head_len];
+    SetData(in_data, data_len);
     SetHeader();
 }
 // Separate header and data from a given datagram
-Datagram::Datagram(const char *datagram, int data_size)
+Datagram::Datagram(const char *in_datagram)
 {
-    header = new char[head_len];
-    memcpy(header, datagram, head_len);
+    datagram = new char[data_len+head_len];
+    datagram = (char*)in_datagram;
     GetHeader();
-    data_len = data_size-128;
-    data = new char[data_len];
-    memcpy(data, datagram + head_len, data_len);
 }
 
 void Datagram::SetHeader()
 {
-    memcpy(header, &counter, sizeof counter);
-    memcpy(header + sizeof counter, &data_type, sizeof data_type);
-    memcpy(header + sizeof counter + sizeof data_type, &data_len, sizeof data_len);
+    memcpy(datagram, &counter, sizeof counter);
+    memcpy(datagram + sizeof counter, &data_type, sizeof data_type);
+    memcpy(datagram + sizeof counter + sizeof data_type, &data_len, sizeof data_len);
 }
 
 void Datagram::GetHeader()
 {
-    counter = *(int *)header;
-    data_type = (Datatype)(*(int *)(header + sizeof counter));
-    data_len = *(int *)(header + sizeof counter + sizeof data_type);
+    memcpy(&counter, datagram, sizeof counter);
+    memcpy(&data_type, datagram + sizeof counter, sizeof data_type);
+    memcpy(&data_len, datagram + sizeof counter + sizeof data_type, sizeof data_len);
+    //counter = *(int *)header;
+    //data_type = (Datatype)(*(int *)(header + sizeof counter));
+    //data_len = *(int *)(header + sizeof counter + sizeof data_type);
 }
 
 Datagram::~Datagram()
 {
-    delete[] data;
-    delete[] header;
+    //delete[] datagram;
 }
 
-void Datagram::SetData(char *_data, int _data_len)
+void Datagram::SetData(const char *_data, int _datalen)
 {
-    data_len = _data_len;
-    memcpy(data, _data, data_len);
+    data_len = _datalen;
+    memcpy(datagram+head_len, _data, data_len);
 }
 
 char *Datagram::GetData()
 {
-    return data;
+    return datagram+head_len;
 }
 
 const char *Datagram::GetDatagram()
 {
-    return (std::string(header) + data).c_str();
+    return datagram;
 }
 
 int Datagram::DatagramSize()
@@ -67,5 +65,5 @@ int Datagram::DatagramSize()
 
 Datagram Datagram::operator=(Datagram other)
 {
-    return Datagram(other.data, other.counter, (int)other.data_type, other.data_len);
+    return Datagram(other.GetData(), other.counter, (int)other.data_type, other.data_len);
 }

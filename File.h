@@ -6,12 +6,12 @@
 struct File
 {
     std::ifstream stream;
-    long size;
-    char* path;
+    int size;
+    std::filesystem::path path;
     File() {size = 0; path = (char*)"";};
     File(char* _path) 
     {
-        path = _path;
+        path = std::filesystem::path(_path);
         stream.open(_path);
         size = std::filesystem::file_size(path);
     }
