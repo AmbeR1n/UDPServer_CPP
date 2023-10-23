@@ -52,7 +52,7 @@ void Sender::Send()
     if (!file.stream.is_open())
         return;
     int size;
-    char* buffer = new char[BUFFER-128];
+    char* buffer = new char[BUFFER];
     std::cout << "Sending to " << inet_ntoa(receiver.sin_addr) << ":" << htons(receiver.sin_port) << std::endl;
     {
         Datagram* name_datagram = (new Datagram(file.path.filename().c_str(), 0, 0, (int)strlen(file.path.filename().c_str()))); 
@@ -66,7 +66,7 @@ void Sender::Send()
     std::cout << "File data sending completed" << std::endl;
     while (true)
     {
-        file.stream.read(buffer, BUFFER-128);
+        file.stream.read(buffer, BUFFER);
         if (datagram_stack[datagram_counter%stack_size] != NULL)
             delete datagram_stack[datagram_counter%stack_size];
         std::cout << datagram_counter << std::endl;
