@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     std::cout << "Server started on " << inet_ntoa(reciever.sin_addr) << ":" << htons(reciever.sin_port) << std::endl;
     //while (true)
     {
-        char* file_name = (char*)"";
+        std::filesystem::path p;
         int file_size = 0;
         
         long t1;
@@ -80,9 +80,9 @@ int main(int argc, char *argv[])
             }
             if (datagram->data_type == Filename)
             {
-                file_name = datagram->GetData();
+                char* file_name = datagram->GetData();
                 std::cout << "File name received " << file_name << " from "<< inet_ntoa(sender.sin_addr) << "\n";
-                std::filesystem::path p("download/"+std::string(file_name));
+                p = std::filesystem::path("download/"+std::string(file_name));
             }
             if (datagram->data_type != Data)
             {
@@ -107,8 +107,8 @@ int main(int argc, char *argv[])
             prev_dgram = curr_dgram;
         } 
         progressbar.Update(temp_size, t1);
-        std::cout << file_name << "\n";
-        printf("%s\t%d\t%d\t%.3f\t%d\n", file_name, current_size, file_size, (1-static_cast<double>(current_size)/file_size)*100, loss);
+        std::cout << p << "\n";
+        printf("%s\t%d\t%d\t%.3f\t%d\n", p.c_str(), current_size, file_size, (1-static_cast<double>(current_size)/file_size)*100, loss);
         progressbar.PrintFinal();
     }
     close(sockfd);
