@@ -71,6 +71,12 @@ int main(int argc, char *argv[])
                 break;
             std::unique_ptr<Datagram> datagram(new Datagram(recv_data));
             //printf("%d\t%d\t%d\n", datagram->counter, datagram->data_type, datagram->data_len);
+            if (datagram->data_type == Filename)
+            {
+                char* file_name = datagram->GetData();
+                std::cout << "File name received " << file_name << " from "<< inet_ntoa(sender.sin_addr) << "\n";
+                p = std::filesystem::path("download/"+std::string(file_name));
+            }
             if (datagram->data_type == Filesize)
             { 
                 file_size = *(int*)datagram->GetData();
@@ -78,12 +84,6 @@ int main(int argc, char *argv[])
                 t1 = current_time<std::chrono::nanoseconds>();
                 std::cout << t1 << "\n";
                 progressbar = ProgressBar(file_size, t1);
-            }
-            if (datagram->data_type == Filename)
-            {
-                char* file_name = datagram->GetData();
-                std::cout << "File name received " << file_name << " from "<< inet_ntoa(sender.sin_addr) << "\n";
-                p = std::filesystem::path("download/"+std::string(file_name));
             }
             if (datagram->data_type == Data)
             {
