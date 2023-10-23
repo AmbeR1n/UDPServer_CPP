@@ -8,19 +8,12 @@
 
 Sender::Sender(int _stack_size, char *recv_addr, char *port, char* _file)
 {
-    std::cout << "1" << std::endl;
     char* folder = (char*)"upload/";
     is_recieving = false;
     stack_size = _stack_size;
-    std::cout << "2" << std::endl;
     file = File((char*)std::filesystem::path(std::string(folder)+_file).c_str());
-    std::cout << "3" << std::endl;
     socketfd = socket(AF_INET, SOCK_DGRAM, 0);
-    std::cout << "4" << std::endl;
-    // Creating socket file descriptor
-    
-    std::cout << "5" << std::endl;
-    // Filling receiver information
+
     memset(&receiver, 0, sizeof receiver);
     receiver.sin_family = AF_INET;
     receiver.sin_port = htons(strtol(port, NULL, 10));
@@ -32,7 +25,6 @@ Sender::Sender(int _stack_size, char *recv_addr, char *port, char* _file)
 
     resend_list = new char[int(stack_size*0.5*sizeof(int))]{"\0"};
     datagram_stack = new Datagram*[stack_size];
-    std::cout << "6" << std::endl;
 }
 
 Sender::~Sender()

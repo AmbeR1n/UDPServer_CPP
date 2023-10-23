@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "Server started on " << inet_ntoa(reciever.sin_addr) << ":" << htons(reciever.sin_port) << " with soket fd " << sockfd << std::endl;
+    std::cout << "Server started on " << inet_ntoa(reciever.sin_addr) << ":" << (reciever.sin_port) << " with soket fd " << sockfd << std::endl;
     while (true)
     {
         char* file_name = (char*)"";
