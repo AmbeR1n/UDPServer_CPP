@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     }
 
     std::cout << "Server started on " << inet_ntoa(reciever.sin_addr) << ":" << htons(reciever.sin_port) << " with soket fd " << sockfd << std::endl;
-    while (true)
+    //while (true)
     {
         char* file_name = (char*)"";
         int file_size = 0;
@@ -109,7 +109,6 @@ int main(int argc, char *argv[])
         progressbar.Update(temp_size, t1);
         printf("%d\t%d\t%.3f\t%d\t%s\n", current_size, file_size, (1-static_cast<double>(current_size)/file_size)*100, loss, file_name);
         progressbar.PrintFinal();
-        break;
     }
     close(sockfd);
     return 0;
