@@ -67,9 +67,12 @@ int main(int argc, char *argv[])
         while ((size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, (struct sockaddr *) &sender, &sender_length)) >= 1)
         {
             if (strcmp(recv_data, "<END>") == 0)
+            {
+                sendto(sockfd, "<END>", 6, 0, (const struct sockaddr *)&sender, (socklen_t)sizeof sender);
                 break;
+            }
             std::unique_ptr<Datagram> datagram(new Datagram(recv_data));
-            //printf("%d\t%d\t%d\n", datagram->counter, datagram->data_type, datagram->data_len);
+            printf("\t%d\t%.30s\n", datagram->counter, datagram->GetData());
             if (datagram->data_type == Filename)
             {
                 char* file_name = datagram->GetData();
@@ -95,24 +98,30 @@ int main(int argc, char *argv[])
                     temp_size = 0;
                     //progressbar.PrintLine();
                 }
-                int curr_dgram = datagram->counter;
-                //std::cout << curr_dgram << "\n";
-
-                if (curr_dgram - prev_dgram != 1)
+                if (prev_dgram < datagram->counter)
                 {
-                    int stop = curr_dgram - 1;
-                    int start = prev_dgram + 1;
-                    //std::cout << curr_dgram - prev_dgram << std::endl;
-                    loss += stop - start - 1;
-                    char resend_req[2 * sizeof loss];
-                    memcpy(resend_req, &(start), sizeof start);
-                    memcpy(resend_req+sizeof start, &(stop), sizeof stop);
-                    //size = sendto(sockfd, resend_req, 2 * sizeof loss, 0, (const struct sockaddr *)&sender, (socklen_t)sizeof sender);
-                    std::cout << "Datagrams from " << start << " to " << stop << " were lost. Sending request to resend lost data\n";
+                    int curr_dgram = datagram->counter;
+
+                    if (curr_dgram - prev_dgram > 1)
+                    {
+                        int stop = curr_dgram - 1;
+                        int start = prev_dgram + 1;
+                        loss += stop - start + 1;
+                        char resend_req[2 * sizeof loss];
+                        memcpy(resend_req, &(start), sizeof start);
+                        memcpy(resend_req+sizeof start, &(stop), sizeof stop);
+                        if (start == stop)
+                            std::cout << "Datagram " << start << " was lost. Sending request to resend lost data\n";
+                        else
+                            std::cout << "Datagrams from " << start << " to " << stop << " were lost. Sending request to resend lost data\n";
+                        size = sendto(sockfd, resend_req, 2 * sizeof loss, 0, (const struct sockaddr *)&sender, (socklen_t)sizeof sender);
+                    }
+                    prev_dgram = curr_dgram;
                 }
-                prev_dgram = curr_dgram;
+                else
+                    loss--;
             }
-        } 
+        }
         progressbar.Update(temp_size, t1);
         printf("%s\t%d\t%d\t%.3f\t%d\n", p.c_str(), current_size, file_size, (1-static_cast<double>(current_size)/file_size)*100, loss);
         progressbar.PrintFinal();

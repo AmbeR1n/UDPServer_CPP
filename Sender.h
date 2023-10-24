@@ -21,11 +21,13 @@ private:
     struct sockaddr_in receiver;
     int stack_size;
     int datagram_counter = 2;
+    int resend_counter = 0;
     int socketfd;
+    bool ready_to_resend;
     bool is_recieving;
     char* resend_list;
     Datagram** datagram_stack;
-    static void Receive(int socket, int buff_size, char* buffer, bool* flag);
+    static void Receive(int socket, int buff_size, char* buffer, bool* flag_resend);
     void Resend();
 };
 #endif
