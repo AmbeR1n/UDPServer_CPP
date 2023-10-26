@@ -10,11 +10,22 @@
 class Sender
 {
 public:
-    Sender(int _stack_size, char* recv_addr, char* port, char* _path);
+    Sender(int _stack_size, char* recv_addr, char* port);
+    Sender(const Sender& other);
+    Sender(Sender&& other);
+    Sender& operator=(const Sender& other);
+    Sender& operator=(Sender&& other);
+    Sender& operator=(Sender other);
     ~Sender();
-    void Send();
+
+
+    void SendFile(char* file);
+    void SendDatagram(Datagram* datagram);
+    void SendDatagram(const char *in_data, int datatype, int datalen);
+    void ResetCounter();
 
 private:
+
     const int BUFFER = 60*1024 - 128; //128 b - header size 
     std::future<void> receive;
     File file;
@@ -28,6 +39,7 @@ private:
     char* resend_list;
     Datagram** datagram_stack;
     static void Receive(int socket, int buff_size, char* buffer, bool* flag_resend);
+    void StartAsyncRecv();
     void Resend();
 };
 #endif

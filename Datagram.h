@@ -3,6 +3,8 @@
 
 #include "Datatype.h"
 
+#define HEADER 128
+
 class Datagram
 {
 public:
@@ -11,6 +13,7 @@ public:
     int counter;
     Datagram(const char* in_data, int count, int datatype, int datalen);
     Datagram(const char* datagram);
+    Datagram();
     ~Datagram();
     void SetData(const char* _data, int _data_len);
     char* GetData();
@@ -19,9 +22,9 @@ public:
     Datagram operator=(Datagram other);
     
 private:
-    const int head_len = 128;
+    //const int HEADER = 128;
     char* datagram;
-    void GetHeader();
+    void GetHeader(char* data);
     void SetHeader();
     
 };

@@ -7,8 +7,13 @@ int main(int argc, char* argv[])
     {
         std::cout << "Requires stack size, server address, server port and path to file";
     }
-    Sender* sender = new Sender(strtol(argv[1], nullptr, 10), argv[2], argv[3], argv[4]);
-    sender->Send();
+    int stack_size = strtol(argv[1], nullptr, 10);
+    char* recv_addr = argv[2];
+    char* recv_port = argv[3];
+    char* file = argv[4];
+    
+    Sender* sender = new Sender(stack_size, recv_addr, recv_port);
+    sender->SendFile(file);
     delete sender;
     return 1;
 }

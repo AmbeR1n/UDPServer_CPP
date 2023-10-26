@@ -50,7 +50,6 @@ int main(int argc, char *argv[])
         perror("socket binding failed");
         exit(EXIT_FAILURE);
     }
-
     std::cout << "Server started on " << inet_ntoa(reciever.sin_addr) << ":" << htons(reciever.sin_port) << std::endl;
     //while (true)
     {
@@ -64,7 +63,7 @@ int main(int argc, char *argv[])
         int temp_size = 0;
         int prev_dgram = 1;
         int size;
-        while ((size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, (struct sockaddr *) &sender, &sender_length)) >= 1)
+        while ((size = recvfrom(sockfd, recv_data, BUFFER_SIZE, 0, (struct sockaddr *) &sender, &sender_length)) > 0)
         {
             if (strcmp(recv_data, "<END>") == 0)
             {
@@ -72,7 +71,7 @@ int main(int argc, char *argv[])
                 break;
             }
             std::unique_ptr<Datagram> datagram(new Datagram(recv_data));
-            printf("\t%d\t%.30s\n", datagram->counter, datagram->GetData());
+            printf("\t%d\t%s:%d\n", datagram->counter, inet_ntoa(sender.sin_addr), htons(sender.sin_port));
             if (datagram->data_type == Filename)
             {
                 char* file_name = datagram->GetData();
