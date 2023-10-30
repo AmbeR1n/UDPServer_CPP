@@ -7,6 +7,7 @@
 #include "Datagram.h"
 #include <arpa/inet.h>
 #include <iostream>
+#include <fstream>
 
 template<typename T>
 long current_time()
@@ -55,7 +56,11 @@ int main(int argc, char *argv[])
     {
         std::filesystem::path p;
         int file_size = 0;
-        
+
+        char* file_name = "download/test.txt";
+        std::ofstream stream;
+        stream.open(file_name, std::ios::out);
+
         long t1;
         ProgressBar progressbar;
         int current_size = 0;
@@ -85,7 +90,7 @@ int main(int argc, char *argv[])
                 t1 = current_time<std::chrono::nanoseconds>();
                 progressbar = ProgressBar(file_size, t1);
             }
-            if (datagram->data_type == Data)
+            if (datagram->data_type == FileData)
             {
                 current_size += datagram->data_len;
                 temp_size += datagram->data_len;
@@ -120,7 +125,12 @@ int main(int argc, char *argv[])
                 else
                     loss--;
             }
+            if (datagram->data_type == Data)
+            {
+                stream.write(datagram->GetData(), datagram->data_len);
+            }
         }
+        stream.close();
         progressbar.Update(temp_size, t1);
         printf("%s\t%d\t%d\t%.3f\t%d\n", p.c_str(), current_size, file_size, (1-static_cast<double>(current_size)/file_size)*100, loss);
         progressbar.PrintFinal();

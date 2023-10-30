@@ -6,7 +6,8 @@ enum Datatype
     Default = -1,
     Filename = 0,
     Filesize = 1,
-    Data = 2
+    FileData = 2,
+    Data = 3
 };
 
 #endif

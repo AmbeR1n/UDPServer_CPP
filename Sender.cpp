@@ -117,7 +117,7 @@ Sender::~Sender()
     delete[] resend_list;
     close(socketfd);
     file.stream.close();
-    printf("Done.\n");
+    //printf("Done.\n");
 }
 
 void Sender::Receive(int socket, int buff_size, char* buffer, bool* flag_resend)
@@ -157,7 +157,7 @@ void Sender::SendFile(char* _file)
     delete name_datagram;
     delete size_datagram;
 
-    std::cout << "File data sending completed" << std::endl;
+    //std::cout << "File data sending completed" << std::endl;
     while (file.stream.peek() != EOF)
     {
         
@@ -186,6 +186,11 @@ void Sender::SendFile(char* _file)
 
 void Sender::SendDatagram(Datagram* datagram)
 {
+    if (datagram->data_type != Data)
+    {
+        std::cout << "Wrong datagram type for a custom send";
+        return;
+    }
     if (datagram_stack[datagram->counter%stack_size] != NULL)
         delete datagram_stack[datagram->counter%stack_size];
     datagram_stack[datagram->counter%stack_size] = datagram;
@@ -197,6 +202,11 @@ void Sender::SendDatagram(Datagram* datagram)
 
 void Sender::SendDatagram(const char *in_data, int datatype, int datalen)
 {
+    if (datatype != Data)
+    {
+        std::cout << "Wrong datagram type for a custom send";
+        return;
+    }
     if (datagram_stack[datagram_counter%stack_size] != NULL)
         delete datagram_stack[datagram_counter%stack_size];
     datagram_stack[datagram_counter%stack_size] = new Datagram(in_data, datagram_counter, datatype, datalen);
@@ -219,7 +229,7 @@ void Sender::Resend()
     int first = *(int*)(resend_list);
     int second = *(int*)(resend_list+sizeof(int));
     //std::cout << first << " - " << second << " : " << second - first << "\n";
-    if (second - first > (int)(stack_size*0.5))
+    if (second - first > (int)(stack_size))
         return;
     for (int i = first; i <= second; i++)
     {
@@ -230,5 +240,5 @@ void Sender::Resend()
             sendto(socketfd, datagram_stack[i%stack_size]->GetDatagram(), datagram_stack[i%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
         }
     }
-    std::cout << "Resending completed\n";
+    //std::cout << "Resending completed\n";
 }
