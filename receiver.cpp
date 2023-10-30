@@ -76,6 +76,7 @@ int main(int argc, char *argv[])
                 break;
             }
             std::unique_ptr<Datagram> datagram(new Datagram(recv_data));
+            std::cout << "Received Datagram #" << datagram->counter << " with " << datagram->data_len << "bytes.";
             //printf("\t%d\t%s:%d\n", datagram->counter, inet_ntoa(sender.sin_addr), htons(sender.sin_port));
             if (datagram->data_type == Filename)
             {
@@ -128,7 +129,7 @@ int main(int argc, char *argv[])
             if (datagram->data_type == Data)
             {
                 //stream.write(datagram->GetData(), datagram->data_len);
-                std::cout << "Received Datagram #" << datagram->counter << " with " << datagram->data_len << "bytes.";
+                
             }
         }
         stream.close();
