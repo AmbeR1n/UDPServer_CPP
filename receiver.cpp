@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
                 break;
             }
             std::unique_ptr<Datagram> datagram(new Datagram(recv_data));
-            //printf("\t%d %d\t%s:%d\n", datagram->counter, datagram->DatagramSize(), inet_ntoa(sender.sin_addr), htons(sender.sin_port));
+            printf("\t%d %d\t%s:%d\n", datagram->counter, datagram->DatagramSize(), inet_ntoa(sender.sin_addr), htons(sender.sin_port));
             if (datagram->data_type == Filename)
             {
                 char* file_name = datagram->GetData();
