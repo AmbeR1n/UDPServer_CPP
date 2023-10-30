@@ -2,11 +2,11 @@
 #include <unistd.h>
 #include <iostream>
 
-Sender::Sender(int _stack_size, char *recv_addr, char *port)
+Sender::Sender(int _stack_size, char *recv_addr, char *port, int buffer_size)
 {
     is_recieving = false;
     stack_size = _stack_size;
-    
+    BUFFER = buffer_size - 128;
     socketfd = socket(AF_INET, SOCK_DGRAM, 0);
 
     memset(&receiver, 0, sizeof receiver);
@@ -18,93 +18,9 @@ Sender::Sender(int _stack_size, char *recv_addr, char *port)
         exit(EXIT_FAILURE);
     }
 
-    resend_list = new char[int(stack_size*0.5*sizeof(int))]{"\0"};
-    datagram_stack = new Datagram*[stack_size];
-}
-
-Sender::Sender(const Sender &other)
-{
-    is_recieving = false;
-    stack_size = other.stack_size;
-    
-    socketfd = other.socketfd;
-
-    memset(&receiver, 0, sizeof receiver);
-    receiver.sin_family = AF_INET;
-    receiver.sin_port = other.receiver.sin_port;
-    receiver.sin_addr.s_addr = other.receiver.sin_addr.s_addr;
-    
     resend_list = new char[int(stack_size*0.5*sizeof(int))];
-    memcpy(resend_list, other.resend_list, int(stack_size*0.5*sizeof(int)));
     datagram_stack = new Datagram*[stack_size];
-    memcpy(datagram_stack, other.datagram_stack, stack_size);
 }
-
-Sender::Sender(Sender &&other)
-{
-    is_recieving = false;
-    stack_size = other.stack_size;
-    
-    socketfd = other.socketfd;
-    other.socketfd = -1;
-
-    memset(&receiver, 0, sizeof receiver);
-    memcpy(&receiver, &other.receiver, sizeof receiver);
-    memset(&other.receiver, 0, sizeof other.receiver);
-    
-    resend_list = new char[int(stack_size*0.5*sizeof(int))];
-    memcpy(resend_list, other.resend_list, int(stack_size*0.5*sizeof(int)));
-    datagram_stack = new Datagram*[stack_size];
-    memcpy(datagram_stack, other.datagram_stack, stack_size);
-
-    delete &other;
-}
-
-Sender &Sender::operator=(const Sender &other)
-{
-    if (this == &other)
-        return *this;
-
-    is_recieving = false;
-    stack_size = other.stack_size;
-    
-    socketfd = other.socketfd;
-
-    memset(&receiver, 0, sizeof receiver);
-    receiver.sin_family = AF_INET;
-    receiver.sin_port = other.receiver.sin_port;
-    receiver.sin_addr.s_addr = other.receiver.sin_addr.s_addr;
-    
-    resend_list = new char[int(stack_size*0.5*sizeof(int))];
-    memcpy(resend_list, other.resend_list, int(stack_size*0.5*sizeof(int)));
-    datagram_stack = new Datagram*[stack_size];
-    memcpy(datagram_stack, other.datagram_stack, stack_size);
-    return *this;
-}
-
-Sender &Sender::operator=(Sender &&other)
-{
-    if (this == &other)
-        return *this;
-    is_recieving = false;
-    stack_size = other.stack_size;
-    
-    socketfd = other.socketfd;
-    other.socketfd = -1;
-
-    memset(&receiver, 0, sizeof receiver);
-    memcpy(&receiver, &other.receiver, sizeof receiver);
-    memset(&other.receiver, 0, sizeof other.receiver);
-    
-    resend_list = new char[int(stack_size*0.5*sizeof(int))];
-    memcpy(resend_list, other.resend_list, int(stack_size*0.5*sizeof(int)));
-    datagram_stack = new Datagram*[stack_size];
-    memcpy(datagram_stack, other.datagram_stack, stack_size);
-
-    delete &other;
-    return *this;
-}
-
 Sender::~Sender()
 {
     printf("Freeing memory and closing buffers\n");
@@ -195,7 +111,7 @@ int Sender::SendDatagram(Datagram* datagram)
         delete datagram_stack[datagram->counter%stack_size];
     datagram_stack[datagram->counter%stack_size] = datagram;
     int size = sendto(socketfd, datagram->GetDatagram(), datagram->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
-    std::cout << "Sent " << size << " bytes to " << inet_ntoa(receiver.sin_addr) << ":" << htons(receiver.sin_port) << ". Waiting 1 second and sending bigger packet\n";
+    //std::cout << "Sent " << size << " bytes to " << inet_ntoa(receiver.sin_addr) << ":" << htons(receiver.sin_port) << "\n";
     StartAsyncRecv();
     if (ready_to_resend)
         Resend();
@@ -213,6 +129,7 @@ int Sender::SendDatagram(const char *in_data, int datatype, int datalen)
         delete datagram_stack[datagram_counter%stack_size];
     datagram_stack[datagram_counter%stack_size] = new Datagram(in_data, datagram_counter, datatype, datalen);
     int size = sendto(socketfd, datagram_stack[datagram_counter%stack_size]->GetDatagram(), datagram_stack[datagram_counter%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
+    //std::cout << "Sent " << size << " bytes to " << inet_ntoa(receiver.sin_addr) << ":" << htons(receiver.sin_port) << "\n";
     StartAsyncRecv();
     if (ready_to_resend)
         Resend();

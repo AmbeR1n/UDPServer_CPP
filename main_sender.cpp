@@ -2,6 +2,8 @@
 #include <iostream>
 #include <unistd.h>
 
+#define MAX_BUFFER 2048
+
 int main(int argc, char* argv[])
 { 
 
@@ -16,10 +18,9 @@ int main(int argc, char* argv[])
     char* file_path = argv[4];
 
     
-    Sender* sender = new Sender(stack_size, recv_addr, recv_port);
+    Sender* sender = new Sender(stack_size, recv_addr, recv_port, MAX_BUFFER);
     //sender->SendFile(file_path);
     int current_buffer = 20;
-    int MAX_BUFFER = 63*1024;
     File file = File(file_path);
     char buffer[MAX_BUFFER];
     int counter = 0;

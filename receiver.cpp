@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    const int BUFFER_SIZE = 24*1024+512+256-128-64+32-16-8-4-2-1-1;
+    const int BUFFER_SIZE = 2*1024;
     const int S_PORT = std::strtol(argv[1], nullptr, 10);
 
     
