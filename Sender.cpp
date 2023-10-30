@@ -219,7 +219,7 @@ void Sender::Resend()
     int first = *(int*)(resend_list);
     int second = *(int*)(resend_list+sizeof(int));
     std::cout << first << " - " << second << " : " << second - first << "\n";
-    if (second - first > (int)(stack_size*0.1))
+    if (second - first > (int)(stack_size*0.5))
         return;
     for (int i = first; i <= second; i++)
     {
