@@ -128,7 +128,6 @@ int main(int argc, char *argv[])
             if (datagram->data_type == Data)
             {
                 stream.write(datagram->GetData(), datagram->data_len);
-                
             }
         }
         stream.close();
