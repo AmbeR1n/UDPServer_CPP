@@ -10,12 +10,7 @@
 class Sender
 {
 public:
-    Sender(int _stack_size, char* recv_addr, char* port);
-    Sender(const Sender& other);
-    Sender(Sender&& other);
-    Sender& operator=(const Sender& other);
-    Sender& operator=(Sender&& other);
-    Sender& operator=(Sender other);
+    Sender(int _stack_size, char* recv_addr, char* port, int buffer_size);
     ~Sender();
 
 
@@ -26,7 +21,7 @@ public:
 
 private:
 
-    const int BUFFER = 24*1024+512+256-128-64+32-16-8-4-2-1-1 - 128; //128 b - header size 
+    int BUFFER; //128 - header size 
     std::future<void> receive;
     File file;
     struct sockaddr_in receiver;
