@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
         std::filesystem::path p;
         int file_size = 0;
 
-        char* file_name = "download/test.txt";
+        const char* file_name = "download/test.txt";
         std::ofstream stream;
         stream.open(file_name, std::ios::out);
 
