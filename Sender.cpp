@@ -165,9 +165,9 @@ void Sender::SendFile(char* _file)
         if (datagram_stack[datagram_counter%stack_size] != NULL)
             delete datagram_stack[datagram_counter%stack_size];
         datagram_stack[datagram_counter%stack_size] = new Datagram((const char*)buffer, datagram_counter, 2, strlen(buffer));
-        printf("Sending data #%d to %s:%d", datagram_counter, inet_ntoa(receiver.sin_addr), htons(receiver.sin_port));
+        //printf("Sending data #%d to %s:%d", datagram_counter, inet_ntoa(receiver.sin_addr), htons(receiver.sin_port));
         size = sendto(socketfd, datagram_stack[datagram_counter%stack_size]->GetDatagram(), datagram_stack[datagram_counter%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
-        printf("Sent %d bytes to %s:%d\n", size, inet_ntoa(receiver.sin_addr), htons(receiver.sin_port));
+        //printf("Sent %d bytes to %s:%d\n", size, inet_ntoa(receiver.sin_addr), htons(receiver.sin_port));
         if (datagram_stack[datagram_counter%stack_size]->DatagramSize() != size)
             std::cout << "Something went wrong with sending data. " << size << "was sent, but " << datagram_stack[datagram_counter%stack_size]->DatagramSize() << "was expected" << std::endl;
         datagram_counter++;

@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    const int BUFFER_SIZE = 60*1024;
+    const int BUFFER_SIZE = 1*1024;
     const int S_PORT = std::strtol(argv[1], nullptr, 10);
 
     
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
                 break;
             }
             std::unique_ptr<Datagram> datagram(new Datagram(recv_data));
-            printf("\t%d\t%s:%d\n", datagram->counter, inet_ntoa(sender.sin_addr), htons(sender.sin_port));
+            //printf("\t%d\t%s:%d\n", datagram->counter, inet_ntoa(sender.sin_addr), htons(sender.sin_port));
             if (datagram->data_type == Filename)
             {
                 char* file_name = datagram->GetData();
