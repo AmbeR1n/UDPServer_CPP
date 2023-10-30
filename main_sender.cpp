@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
         sender->SendDatagram(datagram);
         counter++;
     }
-    sender->SendFile(file_path);
+    //sender->SendFile(file_path);
     delete sender;
     return 1;
 }
