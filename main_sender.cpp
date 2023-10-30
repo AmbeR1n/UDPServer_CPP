@@ -23,8 +23,8 @@ int main(int argc, char* argv[])
     {
         file.stream.read(buffer, current_buffer);
         Datagram* datagram = new Datagram((const char*)buffer, counter, 3, current_buffer);
-        sender->SendDatagram(datagram);
-        std::cout << "Sent " << current_buffer << " bytes. Waiting 1 second and sending bigger packet\n";
+        int size = sender->SendDatagram(datagram);
+        std::cout << "Sent " << size << " bytes. Waiting 1 second and sending bigger packet\n";
         counter++;
         current_buffer += 100;
         sleep(1);

@@ -20,8 +20,8 @@ public:
 
 
     void SendFile(char* file);
-    void SendDatagram(Datagram* datagram);
-    void SendDatagram(const char *in_data, int datatype, int datalen);
+    int SendDatagram(Datagram* datagram);
+    int SendDatagram(const char *in_data, int datatype, int datalen);
     void ResetCounter();
 
 private:

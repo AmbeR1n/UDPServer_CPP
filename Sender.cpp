@@ -184,7 +184,7 @@ void Sender::SendFile(char* _file)
     return;
 }
 
-void Sender::SendDatagram(Datagram* datagram)
+int Sender::SendDatagram(Datagram* datagram)
 {
     if (datagram->data_type != Data)
     {
@@ -194,13 +194,14 @@ void Sender::SendDatagram(Datagram* datagram)
     if (datagram_stack[datagram->counter%stack_size] != NULL)
         delete datagram_stack[datagram->counter%stack_size];
     datagram_stack[datagram->counter%stack_size] = datagram;
-    sendto(socketfd, datagram->GetDatagram(), datagram->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
+    int size = sendto(socketfd, datagram->GetDatagram(), datagram->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
     StartAsyncRecv();
     if (ready_to_resend)
         Resend();
+    return size;
 }
 
-void Sender::SendDatagram(const char *in_data, int datatype, int datalen)
+int Sender::SendDatagram(const char *in_data, int datatype, int datalen)
 {
     if (datatype != Data)
     {
@@ -210,10 +211,11 @@ void Sender::SendDatagram(const char *in_data, int datatype, int datalen)
     if (datagram_stack[datagram_counter%stack_size] != NULL)
         delete datagram_stack[datagram_counter%stack_size];
     datagram_stack[datagram_counter%stack_size] = new Datagram(in_data, datagram_counter, datatype, datalen);
-    sendto(socketfd, datagram_stack[datagram_counter%stack_size]->GetDatagram(), datagram_stack[datagram_counter%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
+    int size = sendto(socketfd, datagram_stack[datagram_counter%stack_size]->GetDatagram(), datagram_stack[datagram_counter%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
     StartAsyncRecv();
     if (ready_to_resend)
         Resend();
+    return size;
 }
 
 void Sender::ResetCounter()
