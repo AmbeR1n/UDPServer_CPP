@@ -26,7 +26,7 @@ public:
 
 private:
 
-    const int BUFFER = 20*1024 - 128; //128 b - header size 
+    const int BUFFER = 25*1024 - 128; //128 b - header size 
     std::future<void> receive;
     File file;
     struct sockaddr_in receiver;
