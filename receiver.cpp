@@ -57,9 +57,9 @@ int main(int argc, char *argv[])
         std::filesystem::path p;
         int file_size = 0;
 
-        const char* file_name = "download/test.txt";
-        std::ofstream stream;
-        stream.open(file_name, std::ios::out);
+        // const char* file_name = "download/test.txt";
+        // std::ofstream stream;
+        // stream.open(file_name, std::ios::out);
 
         long t1;
         ProgressBar progressbar;
@@ -76,8 +76,7 @@ int main(int argc, char *argv[])
                 break;
             }
             std::unique_ptr<Datagram> datagram(new Datagram(recv_data));
-            std::cout << "Received Datagram #" << datagram->counter << " with " << datagram->data_len << "bytes.";
-            //printf("\t%d\t%s:%d\n", datagram->counter, inet_ntoa(sender.sin_addr), htons(sender.sin_port));
+            printf("\t%d %d\t%s:%d\n", datagram->counter, datagram->DatagramSize(), inet_ntoa(sender.sin_addr), htons(sender.sin_port));
             if (datagram->data_type == Filename)
             {
                 char* file_name = datagram->GetData();
@@ -132,7 +131,7 @@ int main(int argc, char *argv[])
                 
             }
         }
-        stream.close();
+        //stream.close();
         progressbar.Update(temp_size, t1);
         printf("%s\t%d\t%d\t%.3f\t%d\n", p.c_str(), current_size, file_size, (1-static_cast<double>(current_size)/file_size)*100, loss);
         progressbar.PrintFinal();

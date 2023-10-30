@@ -17,19 +17,19 @@ int main(int argc, char* argv[])
     int current_buffer = 100;
     File file = File(file_path);
     Sender* sender = new Sender(stack_size, recv_addr, recv_port);
-    char buffer[MAX_BUFFER];
-    int counter = 0;
-    while (file.stream.peek() != EOF)
-    {
-        file.stream.read(buffer, current_buffer);
-        Datagram* datagram = new Datagram((const char*)buffer, counter, 3, current_buffer);
-        int size = sender->SendDatagram(datagram);
+    // char buffer[MAX_BUFFER];
+    // int counter = 0;
+    // while (file.stream.peek() != EOF)
+    // {
+    //     file.stream.read(buffer, current_buffer);
+    //     Datagram* datagram = new Datagram((const char*)buffer, counter, 3, current_buffer);
+    //     int size = sender->SendDatagram(datagram);
         
-        counter++;
-        current_buffer += 100;
-        sleep(2);
-    }
-    //sender->SendFile(file_path);
+    //     counter++;
+    //     current_buffer += 1000;
+    //     sleep(1);
+    // }
+    sender->SendFile(file_path);
     delete sender;
     return 1;
 }
