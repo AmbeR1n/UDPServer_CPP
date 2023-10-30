@@ -109,10 +109,10 @@ int main(int argc, char *argv[])
                         char resend_req[2 * sizeof loss];
                         memcpy(resend_req, &(start), sizeof start);
                         memcpy(resend_req+sizeof start, &(stop), sizeof stop);
-                        if (start == stop)
-                            std::cout << "Datagram " << start << " was lost. Sending request to resend lost data\n";
-                        else
-                            std::cout << "Datagrams from " << start << " to " << stop << " were lost. Sending request to resend lost data\n";
+                        // if (start == stop)
+                        //     std::cout << "Datagram " << start << " was lost. Sending request to resend lost data\n";
+                        // else
+                        //     std::cout << "Datagrams from " << start << " to " << stop << " were lost. Sending request to resend lost data\n";
                         size = sendto(sockfd, resend_req, 2 * sizeof loss, 0, (const struct sockaddr *)&sender, (socklen_t)sizeof sender);
                     }
                     prev_dgram = curr_dgram;

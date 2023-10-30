@@ -122,10 +122,10 @@ Sender::~Sender()
 
 void Sender::Receive(int socket, int buff_size, char* buffer, bool* flag_resend)
 {
-    std::cout << "waiting for request for resending lost data\n";
+    //std::cout << "waiting for request for resending lost data\n";
     recvfrom(socket, buffer, buff_size, 0, NULL, NULL);
     *flag_resend = true;
-    std::cout << "Received request for resending lost data\n";
+    //std::cout << "Received request for resending lost data\n";
 }
 
 void Sender::StartAsyncRecv()
@@ -213,19 +213,19 @@ void Sender::ResetCounter()
 
 void Sender::Resend()
 {
-    std::cout << "Starting resending data\n";
+    //std::cout << "Starting resending data\n";
     ready_to_resend = false;
     is_recieving = false;
     int first = *(int*)(resend_list);
     int second = *(int*)(resend_list+sizeof(int));
-    std::cout << first << " - " << second << " : " << second - first << "\n";
+    //std::cout << first << " - " << second << " : " << second - first << "\n";
     if (second - first > (int)(stack_size*0.5))
         return;
     for (int i = first; i <= second; i++)
     {
         if (datagram_stack[i%stack_size]->counter == i)
         {
-            std::cout << "Resending datagram #" << datagram_stack[i%stack_size]->counter << "\n";
+            //std::cout << "Resending datagram #" << datagram_stack[i%stack_size]->counter << "\n";
             resend_counter++;
             sendto(socketfd, datagram_stack[i%stack_size]->GetDatagram(), datagram_stack[i%stack_size]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
         }
