@@ -10,7 +10,7 @@
 class Sender
 {
 public:
-    Sender(int _stack_size, char* recv_addr, char* port, int buffer_size);
+    Sender(int _stack_size, char* recv_addr, char* port);
     ~Sender();
 
 
@@ -20,8 +20,6 @@ public:
     void ResetCounter();
 
 private:
-
-    int BUFFER; //128 - header size 
     std::future<void> receive;
     File file;
     struct sockaddr_in receiver;

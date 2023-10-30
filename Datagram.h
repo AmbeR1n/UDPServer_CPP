@@ -2,8 +2,7 @@
 #define DATAGRAM_H
 
 #include "Datatype.h"
-
-#define HEADER 128
+#include "consts.h"
 
 class Datagram
 {
