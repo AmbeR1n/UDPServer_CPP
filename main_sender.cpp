@@ -17,6 +17,7 @@ int main(int argc, char* argv[])
     int current_buffer = 100;
     File file = File(file_path);
     Sender* sender = new Sender(stack_size, recv_addr, recv_port);
+    sender->SendFile(file_path);
     // char buffer[MAX_BUFFER];
     // int counter = 0;
     // while (file.stream.peek() != EOF)
@@ -29,7 +30,6 @@ int main(int argc, char* argv[])
     //     current_buffer += 1000;
     //     sleep(1);
     // }
-    sender->SendFile(file_path);
     delete sender;
     return 1;
 }

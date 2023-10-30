@@ -195,7 +195,7 @@ int Sender::SendDatagram(Datagram* datagram)
         delete datagram_stack[datagram->counter%stack_size];
     datagram_stack[datagram->counter%stack_size] = datagram;
     int size = sendto(socketfd, datagram->GetDatagram(), datagram->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
-    std::cout << "Sent " << size << " bytes to " << inet_ntoa(receiver.sin_addr) << ":" << htons(receiver.sin_port) << ". Waiting 1 second and sending bigger packet\n";
+    //std::cout << "Sent " << size << " bytes to " << inet_ntoa(receiver.sin_addr) << ":" << htons(receiver.sin_port) << ". Waiting 1 second and sending bigger packet\n";
     StartAsyncRecv();
     if (ready_to_resend)
         Resend();
