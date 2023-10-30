@@ -189,7 +189,7 @@ int Sender::SendDatagram(Datagram* datagram)
     if (datagram->data_type != Data)
     {
         std::cout << "Wrong datagram type for a custom send";
-        return;
+        return -1;
     }
     if (datagram_stack[datagram->counter%stack_size] != NULL)
         delete datagram_stack[datagram->counter%stack_size];
@@ -206,7 +206,7 @@ int Sender::SendDatagram(const char *in_data, int datatype, int datalen)
     if (datatype != Data)
     {
         std::cout << "Wrong datagram type for a custom send";
-        return;
+        return -1;
     }
     if (datagram_stack[datagram_counter%stack_size] != NULL)
         delete datagram_stack[datagram_counter%stack_size];
