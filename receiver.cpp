@@ -127,7 +127,8 @@ int main(int argc, char *argv[])
             }
             if (datagram->data_type == Data)
             {
-                stream.write(datagram->GetData(), datagram->data_len);
+                //stream.write(datagram->GetData(), datagram->data_len);
+                std::cout << "Received Datagram #" << datagram->counter << " with " << datagram->data_len << "bytes.";
             }
         }
         stream.close();
