@@ -1,29 +1,36 @@
 #include "Datagram.h"
 #include <cstring>
 
-// Building datagram from given data and info
-Datagram::Datagram(const char *in_data, int count, int datatype, int datalen)
+int Datagram::global_counter = -1;
+
+// Create new datagram from data. Increments counter
+Datagram::Datagram(const char *in_data, int datatype, int datalen)
 {
-    counter = count;
+    global_counter++;
+    counter = global_counter;
     data_type = (Datatype)datatype;
     data_len = datalen;
-    datagram = new char[data_len+HEADER];
+    datagram = new char[data_len+DATAGRAM_HEADER];
     SetData(in_data, data_len);
     SetHeader();
+    
 }
-// Separate header and data from a given datagram
+
+// Build datagram from another one given in form of char array. Doesn't increment counter
 Datagram::Datagram(const char *in_datagram)
 {
-    char _header[HEADER];
-    memcpy(_header, in_datagram, HEADER);
+    char* _header = new char[DATAGRAM_HEADER];
+    memcpy(_header, in_datagram, DATAGRAM_HEADER);
     GetHeader(_header);
-    datagram = new char[data_len+HEADER];
+    delete[] _header;
+    datagram = new char[data_len+DATAGRAM_HEADER];
     datagram = (char*)in_datagram;
 }
 
+// Empty datagram. Doesn't increment counter
 Datagram::Datagram()
 {
-    datagram = new char[HEADER];
+    datagram = new char[DATAGRAM_HEADER];
 }
 
 void Datagram::SetHeader()
@@ -40,33 +47,39 @@ void Datagram::GetHeader(char* data)
     memcpy(&data_len, data + sizeof counter + sizeof data_type, sizeof data_len);
 }
 
+// Delete datagram
 Datagram::~Datagram()
 {
     //delete[] datagram;
 }
 
+// Sets given data with given datalen
 void Datagram::SetData(const char *_data, int _datalen)
 {
     data_len = _datalen;
-    memcpy(datagram+HEADER, _data, data_len);
+    memcpy(datagram+DATAGRAM_HEADER, _data, data_len);
 }
 
+// Returns data from datagram
 char *Datagram::GetData()
 {
-    return datagram+HEADER;
+    return datagram+DATAGRAM_HEADER;
 }
 
+// Returns datagram (header+data)
 const char *Datagram::GetDatagram()
 {
     return datagram;
 }
 
+// Returns size of header and data
 int Datagram::DatagramSize()
 {
-    return HEADER + data_len; 
+    return DATAGRAM_HEADER + data_len; 
 }
 
-Datagram Datagram::operator=(Datagram other)
+// Resets counter to 0. After this, next created datagram will have counter = 0.
+void Datagram::ResetCounter()
 {
-    return Datagram(other.GetData(), other.counter, (int)other.data_type, other.data_len);
+    counter = 0;
 }

@@ -10,10 +10,10 @@
 class Sender
 {
 public:
-    Sender(int _stack_size, char* recv_addr, char* port);
+    Sender(char* recv_addr, char* port);
     ~Sender();
 
-
+    void SendEnd();
     void SendFile(char* file);
     int SendDatagram(Datagram* datagram);
     int SendDatagram(const char *in_data, int datatype, int datalen);
@@ -23,8 +23,6 @@ private:
     std::future<void> receive;
     File file;
     struct sockaddr_in receiver;
-    int stack_size;
-    int datagram_counter = 2;
     int resend_counter = 0;
     int socketfd;
     bool ready_to_resend;

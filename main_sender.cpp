@@ -5,36 +5,37 @@
 int main(int argc, char* argv[])
 { 
 
-    if (argc != 5)
+    if (argc != 4)
     {
-        std::cout << "sender stack_size server_address server_port file_path";
+        std::cout << "sender server_address server_port file_path";
     }
     
-    int stack_size = strtol(argv[1], nullptr, 10);
-    char* recv_addr = argv[2];
-    char* recv_port = argv[3];
-    char* file_path = argv[4];
+    char* recv_addr = argv[1];
+    char* recv_port = argv[2];
+    char* file_path = argv[3];
 
-    Sender* sender = new Sender(stack_size, recv_addr, recv_port);
-    sender->SendFile(file_path);
-    // int current_buffer = 20;
-    // File file = File(file_path);
-    // char buffer[BUFFER];
-    // int counter = 0;
-    // while (file.stream.peek() != EOF)
-    // {
-    //     if (current_buffer > MAX_BUFFER)
-    //         current_buffer = MAX_BUFFER;
-    //     file.stream.read(buffer, current_buffer);
-    //     Datagram* datagram = new Datagram((const char*)buffer, counter, 3, current_buffer);
-    //     sleep(1);
-    //     int size = sender->SendDatagram(datagram);    
-    //     counter++;
-    //     if (counter%2)
-    //         current_buffer += 5000;
-    //     else
-    //         current_buffer += 1;
-    // }
+    Sender* sender = new Sender(recv_addr, recv_port);
+    //sender->SendFile(file_path);
+    File file = File(file_path);
+    char buffer[BUFFER+1];
+    buffer[BUFFER] = '\0';
+    int counter = 0;
+    std::ofstream stream;
+    stream.open("upload/test.txt", std::ios::out);
+    while (file.stream.peek() != EOF)
+    {
+        if (counter == 100)
+            break;
+        file.stream.read(buffer, BUFFER);
+        Datagram* datagram = new Datagram((const char*)buffer, 3, strlen(buffer));
+        std::string new_line = std::to_string(counter)+buffer+"\n";
+        stream.write(new_line.c_str(), new_line.size());
+        std::cout << "Sent datagram #" << datagram->counter << std::endl;
+        sender->SendDatagram(datagram);
+        counter++;
+    }
+    sender->SendEnd();
+    file.stream.close();
     delete sender;
     return 1;
 }
