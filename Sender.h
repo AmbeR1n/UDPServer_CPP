@@ -29,7 +29,7 @@ private:
     bool is_recieving;
     char* resend_list;
     Datagram** datagram_stack;
-    static void Receive(int socket, int buff_size, char* buffer, bool* flag_resend);
+    static void Receive(int socket, bool* flag_resend);
     void StartAsyncRecv();
     void Resend();
 };
