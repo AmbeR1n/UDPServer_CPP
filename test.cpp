@@ -47,7 +47,7 @@ int main(int argc, char** argv)
         memcpy(array + sizeof a + sizeof b, &c, sizeof c);
         std::cout << &array[sizeof a + sizeof b + sizeof c] << std::endl;
     }
-    if(true)
+    if(false)
     {
         Datagram** array = new Datagram*[10];
         for (int i = 0; i<10;i++)
@@ -56,5 +56,11 @@ int main(int argc, char** argv)
             std::cout << Datagram::global_counter << " " << i << " " << array[i%10]->counter << std::endl;
         }
 
+    }
+    if(true)
+    {
+        const char* str = "hello";
+        if (strcmp(str, "hello") == 0)
+            printf("HELLO");
     }
 }  

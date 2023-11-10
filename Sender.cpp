@@ -17,6 +17,7 @@ Sender::Sender(char *recv_addr, char *port)
     resend_list = new char[STACK*sizeof(int)];
     datagram_stack = new Datagram*[STACK];
 }
+
 Sender::~Sender()
 {
 //printf("Freeing memory and closing buffers\n");
@@ -37,26 +38,21 @@ void Sender::Receive(int socket, bool* flag_resend)
     char buffer[50];
 std::cout << "Waiting message from receiver" << std::endl;
     recvfrom(socket, buffer, 50, 0, NULL, NULL);
-    std::cout << buffer;
-    if (strcmp(buffer, "<LOSS>"))
+    //std::cout << buffer;
+    if (strcmp(buffer, "<LOSS>") == 0)
     {   
         *flag_resend = true;
         std::cout << "Received request for resending lost data" << std::endl;
     }
-}
-
-void Sender::StartAsyncRecv()
-{
-    if (!is_recieving)
-    {
-        is_recieving = true;
-        receive = std::async(std::launch::async, Receive, socketfd, &ready_to_resend);
+    if (strcmp(buffer, "<END>") == 0)
+    {   
+        return;
     }
 }
 
 void Sender::SendEnd()
 {
-    for (int i = 0; i<1000; i++)
+    for (int i = 0; i < 1000; i++)
         sendto(socketfd, "<END>", 6, 0, (const struct sockaddr *) &receiver, sizeof(receiver));
 }
 
@@ -65,8 +61,9 @@ void Sender::SendFile(char *_file)
     file = File((char*)std::filesystem::path(_file).c_str());
     if (!file.stream.is_open())
         return;
-    char* buffer = new char[BUFFER+1];
-    buffer[BUFFER] = '\0';
+    int chunk_size = BUFFER - DATAGRAM_HEADER + 1;
+    char* buffer = new char[chunk_size];
+    buffer[chunk_size-1] = '\0';
 //std::cout << "Sending to " << inet_ntoa(receiver.sin_addr) << ":" << htons(receiver.sin_port) << std::endl;
 
     datagram_stack[0] = (new Datagram(file.path.filename().c_str(), 0, (int)strlen(file.path.filename().c_str()))); 
@@ -78,10 +75,14 @@ void Sender::SendFile(char *_file)
 std::cout << "File data sending completed" << std::endl;
     while (file.stream.peek() != EOF)
     {
-        StartAsyncRecv();
+        if (!is_recieving)
+        {
+            is_recieving = true;
+            receive = std::async(std::launch::async, Receive, socketfd, &ready_to_resend);
+        }
         if (ready_to_resend)
             Resend();
-        file.stream.read(buffer, BUFFER);
+        file.stream.read(buffer, chunk_size);
         //if (datagram_stack[datagram_counter%STACK] != NULL)
         //    delete datagram_stack[datagram_counter%STACK];
         Datagram* current = new Datagram((const char*)buffer, 2, strlen(buffer));
@@ -112,7 +113,11 @@ int Sender::SendDatagram(Datagram* datagram)
     datagram_stack[datagram->counter%STACK] = datagram;
     int size = sendto(socketfd, datagram->GetDatagram(), datagram->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
 //std::cout << "Sent " << size << " bytes to " << inet_ntoa(receiver.sin_addr) << ":" << htons(receiver.sin_port) << "\n";
-    StartAsyncRecv();
+    if (!is_recieving)
+    {
+        is_recieving = true;
+        receive = std::async(std::launch::async, Receive, socketfd, &ready_to_resend);
+    }
     if (ready_to_resend)
         Resend();
     return size;
@@ -130,7 +135,11 @@ int Sender::SendDatagram(const char *in_data, int datatype, int datalen)
     datagram_stack[Datagram::global_counter%STACK+1] = new Datagram(in_data, datatype, datalen);
     int size = sendto(socketfd, datagram_stack[Datagram::global_counter%STACK]->GetDatagram(), datagram_stack[Datagram::global_counter%STACK]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
 //std::cout << "Sent " << size << " bytes to " << inet_ntoa(receiver.sin_addr) << ":" << htons(receiver.sin_port) << "\n";
-    StartAsyncRecv();
+    if (!is_recieving)
+    {
+        is_recieving = true;
+        receive = std::async(std::launch::async, Receive, socketfd, &ready_to_resend);
+    }
     if (ready_to_resend)
         Resend();
     return size;
@@ -138,7 +147,7 @@ int Sender::SendDatagram(const char *in_data, int datatype, int datalen)
 
 void Sender::Resend()
 {
-    sendto(socketfd, "<READY>", 8, 0, (const struct sockaddr *) &receiver, sizeof receiver);
+    sendto(socketfd, "<READY>", 10, 0, (const struct sockaddr *) &receiver, sizeof receiver);
     recvfrom(socketfd, resend_list, STACK*sizeof(int), 0, NULL, NULL);
     ready_to_resend = false;
     is_recieving = false;
@@ -158,5 +167,5 @@ std::cout << "looking for datagram #" << lost << "\n";
             sendto(socketfd, datagram_stack[lost%STACK]->GetDatagram(), datagram_stack[lost%STACK]->DatagramSize(), 0, (const struct sockaddr *) &receiver, sizeof receiver);
         }
     }
-//std::cout << "Resending completed\n";
+std::cout << "Resending completed\n";
 }

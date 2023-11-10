@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 
     const int S_PORT = std::strtol(argv[1], nullptr, 10);
     //// Too Small. Doesnt count header
-    char recv_data[BUFFER+DATAGRAM_HEADER];
+    char recv_data[BUFFER];
 
     struct sockaddr_in reciever;
     struct sockaddr_in sender;
@@ -80,16 +80,25 @@ std::cout << "Server started on " << inet_ntoa(reciever.sin_addr) << ":" << hton
             {
                 sendto(sockfd, "<LOSS>", 7, 0, (const struct sockaddr *)&sender, (socklen_t)sizeof sender);
                 int loss_size = datagram->counter-counter;
-                char* resend_req = new char[sizeof(int) * (loss_size+1)];
-                memcpy(resend_req, &loss_size, sizeof(int));
-                for (int i = 0; i < loss_size; i++)
+                while(strcmp(recv_data, "<READY>") != 0)
                 {
-                    int pack = counter + 1 + i;
-                    memcpy(resend_req + (i+1) * sizeof(int), &(pack), sizeof(int));
+                    recvfrom(sockfd, recv_data, BUFFER, 0, (struct sockaddr *) &sender, &sender_length);
+                    loss_size++;
                 }
-                recvfrom(sockfd, recv_data, BUFFER, 0, (struct sockaddr *) &sender, &sender_length);
+                loss_size--;
+                char* resend_req = new char[sizeof(int) * (loss_size+1)];
+                int last = counter + loss_size;
+                memcpy(resend_req, &loss_size, sizeof(int));
+                memcpy(resend_req + 4, &counter, sizeof(int));
+                memcpy(resend_req + 8, &last, sizeof(int));
+                // for (int i = 1; i <= loss_size; i++)
+                // {
+                //     int pack = counter + i;
+                //     printf("%d %d\n", i*sizeof(int), pack);
+                //     memcpy(resend_req + i * sizeof(int), &(pack), sizeof(int));
+                // }
                 sendto(sockfd, resend_req, 2 * sizeof loss, 0, (const struct sockaddr *)&sender, (socklen_t)sizeof sender);
-                printf("%d Datagrams %d-%d were lost\n", loss_size, counter+1, datagram->counter);
+                printf("%d Datagrams %d-%d were lost\n", loss_size, counter+1, counter+loss_size);
                 delete[] resend_req;
                 continue;
             }

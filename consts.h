@@ -3,6 +3,6 @@
 
 #define DATAGRAM_HEADER 128
 #define BUFFER 2048
-#define STACK 1000
+#define STACK 10000
 
 #endif
